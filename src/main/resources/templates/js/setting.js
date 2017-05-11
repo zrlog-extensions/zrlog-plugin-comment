@@ -7,10 +7,10 @@ $(function(){
         },
         mounted : function(){
             $.get("info",function(e){
-                $("#commentEmailNotify-switch").bootstrapSwitch('state', e.commentEmailNotify);
+                $("#commentEmailNotify-switch").bootstrapSwitch('state', e.commentEmailNotify == 'on');
                 $("#commentEmailNotify-switch").attr("value",e.commentEmailNotify);
-                $("#status-switch").bootstrapSwitch('state', e.status);
-                $("#status-switch").attr("value",e.status);
+                $("#status-switch").bootstrapSwitch('state', e.status  == 'on');
+                $("#status-switch").attr("value",e.status );
                 changyan.$set(changyan,'changyan',e);
                 changyan.$set(changyan,'version','v'+e.version);
             })
