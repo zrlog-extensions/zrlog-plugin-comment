@@ -119,7 +119,7 @@ public class ChangyanController {
                 comment.setCreatedTime(new Date(commentsEntry.getCtime()));
                 comment.setPostId(commentsEntry.getCmtid().longValue());
 
-                System.out.println(new JSONSerializer().deepSerialize(comment));
+                LOGGER.info(new JSONSerializer().deepSerialize(comment));
                 session.sendMsg(ContentType.JSON, comment, ActionType.ADD_COMMENT.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
                     @Override
                     public void handler(MsgPacket msgPacket) {
@@ -133,7 +133,8 @@ public class ChangyanController {
                         public void handler(MsgPacket msgPacket) {
                             PublicInfo publicInfo = msgPacket.convertToClass(PublicInfo.class);
                             Map<String, String> map = new HashMap<>();
-                            map.put("content", comment.getName() + " 评论了 " + comment.getContent() + " <a href='" + changyanComment.getTitle() + "'>点击查看</a>");
+                            map.put("content", comment.getName() + " 评论了：" + changyanComment.getTitle() + "</br>" +
+                                    "评论内容： " + comment.getContent() + " <a href='" + changyanComment.getUrl() + "'>点击查看</a> ");
                             map.put("title", publicInfo.getTitle() + "有了新的评论");
                             session.requestService("emailService", map);
                         }
