@@ -15,7 +15,7 @@ public class Start {
     public static void main(String[] args) throws IOException {
         List<Class> classList = new ArrayList<>();
         classList.add(ChangyanController.class);
-        new NioClient().connectServerByProperties(args, classList, "/plugin.properties", ChangyanPluginAction.class);
+        new NioClient(new ChangyanClientActionHandler()).connectServerByProperties(args, classList, "/plugin.properties", ChangyanPluginAction.class);
     }
 }
 

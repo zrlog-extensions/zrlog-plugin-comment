@@ -4,6 +4,7 @@ import com.fzb.zrlog.plugin.IMsgPacketCallBack;
 import com.fzb.zrlog.plugin.IOSession;
 import com.fzb.zrlog.plugin.changyan.response.ChangyanComment;
 import com.fzb.zrlog.plugin.changyan.response.CommentsEntry;
+import com.fzb.zrlog.plugin.client.ClientActionHandler;
 import com.fzb.zrlog.plugin.common.IdUtil;
 import com.fzb.zrlog.plugin.common.modle.Comment;
 import com.fzb.zrlog.plugin.common.modle.PublicInfo;
@@ -16,9 +17,11 @@ import flexjson.JSONDeserializer;
 import flexjson.JSONSerializer;
 import org.apache.log4j.Logger;
 
+import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class ChangyanController {
 
@@ -47,7 +50,7 @@ public class ChangyanController {
 
     public void info() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "appId,appKey,status,commentEmailNotify");
+        keyMap.put("key", "appId,appKey,status,commentEmailNotify,callbackUrl");
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
             @Override
             public void handler(MsgPacket msgPacket) {
@@ -55,6 +58,9 @@ public class ChangyanController {
                 map.put("userName", requestInfo.getUserName());
                 map.put("userId", requestInfo.getUserId());
                 map.put("fullUrl", requestInfo.getFullUrl().replace("install", ""));
+                if (map.get("callbackUrl") == null || "".equals(map.get("callbackUrl"))) {
+                    map.put("callbackUrl", requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/sync/" + UUID.randomUUID().toString().replace("-", ""));
+                }
                 session.sendJsonMsg(map, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
             }
         });
@@ -69,37 +75,26 @@ public class ChangyanController {
      */
     public void sync() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "short_name,secret,status,commentEmailNotify");
+        keyMap.put("key", "short_name,secret,status,commentEmailNotify,callbackUrl");
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
             @Override
             public void handler(MsgPacket msgPacket) {
-                /*Map<String, Object> param = getRequest();
-                String action = (String) param.get("action");
-                String signature = (String) param.get("signature");
-                param.remove("signature");
-
-                LOGGER.info("param = " + param);*/
-
                 Map<String, Object> changyan = new JSONDeserializer<Map<String, Object>>().deserialize(msgPacket.getDataStr());
-                String commentJsonStr = requestInfo.getParam().get("data")[0];
-                LOGGER.info(commentJsonStr);
-                final ChangyanComment changyanComment = new JSONDeserializer<ChangyanComment>().deserialize(commentJsonStr, ChangyanComment.class);
-                Map<String, Object> response = new HashMap<>();
-                System.out.println(changyanComment);
-                dealSyncRequest(response, changyanComment, "on".equals(changyan.get("commentEmailNotify")));
+                String callbackUrl = (String) changyan.get("callbackUrl");
+                String ignoreChar = "/p" + "/" + session.getPlugin().getShortName();
                 try {
-                    // check signature
-                    response.put("status", 400);
-                    /*if (param.isEmpty() || !signature.equals(ChangyanUtil.hmacSHA1Encrypt(param, duoshuo.get("secret") + ""))) {
-                        response.put("status", 400);
-                        session.sendMsg(ContentType.JSON, response, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
+                    if (callbackUrl != null && new URL(callbackUrl).getPath().replace(ignoreChar, "").equals(requestInfo.getUri().replace(".action", ""))) {
+                        String commentJsonStr = requestInfo.getParam().get("data")[0];
+                        LOGGER.info(commentJsonStr);
+                        final ChangyanComment changyanComment = new JSONDeserializer<ChangyanComment>().deserialize(commentJsonStr, ChangyanComment.class);
+                        Map<String, Object> response = new HashMap<>();
+                        dealSyncRequest(response, changyanComment, "on".equals(changyan.get("commentEmailNotify")));
                     } else {
-
-                    }*/
+                        session.sendMsg(ContentType.HTML, ClientActionHandler.ACTION_NOT_FOUND_PAGE, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
+                    }
                 } catch (Exception e) {
-                    response.put("status", 500);
-                    LOGGER.error("changyan sync error ", e);
-                    session.sendMsg(ContentType.JSON, response, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
+                    LOGGER.error("", e);
+                    session.sendMsg(ContentType.HTML, "Exception", requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
                 }
             }
         });
@@ -142,20 +137,5 @@ public class ChangyanController {
                 }
             }
         }
-    }
-
-    public void refresh() {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "appId,appKey,status");
-        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
-            @Override
-            public void handler(MsgPacket msgPacket) {
-                /*Map<String, Object> map = new JSONDeserializer<Map<String, Object>>().deserialize(msgPacket.getDataStr());
-                List<ResponseEntry> responseEntryList = ChangyanUtil.getComments(map.get("appId") + "", map.get("appKey") + "");
-                for (ResponseEntry entry : responseEntryList) {
-                    dealSyncRequest(new HashMap<String, Object>(), entry, map);
-                }*/
-            }
-        });
     }
 }

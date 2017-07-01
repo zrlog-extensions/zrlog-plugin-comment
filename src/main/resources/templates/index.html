@@ -32,14 +32,21 @@
             <div class="form-group">
                 <label class="col-md-3 control-label no-padding-right"> APP ID </label>
                 <div class="col-md-2">
-                    <input type="text" name="appId" :value="val(changyan.appId)" class="form-control">
+                    <input name="appId" :value="val(changyan.appId)" class="form-control">
                 </div>
             </div>
 
             <div class="form-group">
                 <label class="col-md-3 control-label no-padding-right"> APP KEY </label>
                 <div class="col-md-4">
-                    <input type="text" name="appKey" :value="val(changyan.appKey)" class="form-control">
+                    <input name="appKey" :value="val(changyan.appKey)" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label no-padding-right"> 评论回调地址 </label>
+                <div class="col-md-9">
+                    <input name="callbackUrl" :value="val(changyan.callbackUrl)" class="form-control">
                 </div>
             </div>
 
