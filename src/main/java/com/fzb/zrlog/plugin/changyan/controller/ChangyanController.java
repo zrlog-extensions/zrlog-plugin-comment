@@ -6,6 +6,7 @@ import com.fzb.zrlog.plugin.changyan.response.ChangyanComment;
 import com.fzb.zrlog.plugin.changyan.response.CommentsEntry;
 import com.fzb.zrlog.plugin.client.ClientActionHandler;
 import com.fzb.zrlog.plugin.common.IdUtil;
+import com.fzb.zrlog.plugin.common.LoggerUtil;
 import com.fzb.zrlog.plugin.common.modle.Comment;
 import com.fzb.zrlog.plugin.common.modle.PublicInfo;
 import com.fzb.zrlog.plugin.data.codec.ContentType;
@@ -13,19 +14,19 @@ import com.fzb.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.fzb.zrlog.plugin.data.codec.MsgPacket;
 import com.fzb.zrlog.plugin.data.codec.MsgPacketStatus;
 import com.fzb.zrlog.plugin.type.ActionType;
-import flexjson.JSONDeserializer;
-import flexjson.JSONSerializer;
-import org.apache.log4j.Logger;
+import com.google.gson.Gson;
 
 import java.net.URL;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class ChangyanController {
 
-    private static Logger LOGGER = Logger.getLogger(ChangyanController.class);
+    private static Logger LOGGER = LoggerUtil.getLogger(ChangyanController.class);
 
     private IOSession session;
     private MsgPacket requestPacket;
@@ -54,7 +55,7 @@ public class ChangyanController {
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
             @Override
             public void handler(MsgPacket msgPacket) {
-                Map map = new JSONDeserializer<Map>().deserialize(msgPacket.getDataStr());
+                Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
                 map.put("userName", requestInfo.getUserName());
                 map.put("userId", requestInfo.getUserId());
                 map.put("fullUrl", requestInfo.getFullUrl().replace("install", ""));
@@ -79,21 +80,21 @@ public class ChangyanController {
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
             @Override
             public void handler(MsgPacket msgPacket) {
-                Map<String, Object> changyan = new JSONDeserializer<Map<String, Object>>().deserialize(msgPacket.getDataStr());
+                Map<String, Object> changyan = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
                 String callbackUrl = (String) changyan.get("callbackUrl");
                 String ignoreChar = "/p" + "/" + session.getPlugin().getShortName();
                 try {
                     if (callbackUrl != null && new URL(callbackUrl).getPath().replace(ignoreChar, "").equals(requestInfo.getUri().replace(".action", ""))) {
                         String commentJsonStr = requestInfo.getParam().get("data")[0];
                         LOGGER.info(commentJsonStr);
-                        final ChangyanComment changyanComment = new JSONDeserializer<ChangyanComment>().deserialize(commentJsonStr, ChangyanComment.class);
+                        final ChangyanComment changyanComment = new Gson().fromJson(commentJsonStr, ChangyanComment.class);
                         Map<String, Object> response = new HashMap<>();
                         dealSyncRequest(response, changyanComment, "on".equals(changyan.get("commentEmailNotify")));
                     } else {
                         session.sendMsg(ContentType.HTML, ClientActionHandler.ACTION_NOT_FOUND_PAGE, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("", e);
+                    LOGGER.log(Level.SEVERE, "", e);
                     session.sendMsg(ContentType.HTML, "Exception", requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
                 }
             }
@@ -114,7 +115,7 @@ public class ChangyanController {
                 comment.setCreatedTime(new Date(commentsEntry.getCtime()));
                 comment.setPostId(commentsEntry.getCmtid().longValue());
 
-                LOGGER.info(new JSONSerializer().deepSerialize(comment));
+                LOGGER.log(Level.INFO, "changyan call " + new Gson().toJson(comment));
                 session.sendMsg(ContentType.JSON, comment, ActionType.ADD_COMMENT.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
                     @Override
                     public void handler(MsgPacket msgPacket) {
