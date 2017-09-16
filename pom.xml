@@ -6,7 +6,7 @@
 
     <groupId>com.fzb.zrlog.plugin</groupId>
     <artifactId>changyan</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
 
     <properties>
         <outputDirectory>/home/xiaochun/zrlog-plugin/</outputDirectory>

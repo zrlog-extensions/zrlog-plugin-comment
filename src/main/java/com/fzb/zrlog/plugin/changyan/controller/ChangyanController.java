@@ -13,6 +13,7 @@ import com.fzb.zrlog.plugin.data.codec.ContentType;
 import com.fzb.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.fzb.zrlog.plugin.data.codec.MsgPacket;
 import com.fzb.zrlog.plugin.data.codec.MsgPacketStatus;
+import com.fzb.zrlog.plugin.render.TemplateRender;
 import com.fzb.zrlog.plugin.type.ActionType;
 import com.google.gson.Gson;
 
@@ -129,9 +130,14 @@ public class ChangyanController {
                         public void handler(MsgPacket msgPacket) {
                             PublicInfo publicInfo = msgPacket.convertToClass(PublicInfo.class);
                             Map<String, String> map = new HashMap<>();
-                            map.put("content", comment.getName() + " 评论了：" + changyanComment.getTitle() + "</br>" +
-                                    "评论内容： " + comment.getContent() + " <a href='" + changyanComment.getUrl() + "'>点击查看</a> ");
-                            map.put("title", publicInfo.getTitle() + "有了新的评论");
+                            Map<String, Object> moduleMap = new HashMap<>();
+                            moduleMap.put("content", comment.getContent());
+                            moduleMap.put("title", changyanComment.getTitle());
+                            moduleMap.put("titleUrl", changyanComment.getUrl());
+                            moduleMap.put("username", comment.getName());
+                            moduleMap.put("version", session.getPlugin().getVersion());
+                            map.put("content", new TemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
+                            map.put("title", publicInfo.getTitle() + " 有了新的评论");
                             session.requestService("emailService", map);
                         }
                     });

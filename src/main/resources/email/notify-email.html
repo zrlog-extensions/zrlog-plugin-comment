@@ -1,0 +1,29 @@
+<style>
+td {
+    vertical-align: bottom;
+}
+
+</style>
+<div align="center">
+    <div align="left" style="width:600px">
+        <h2>您好：</h2>
+        <h3>文章 ${title} 有了新的评论</h3>
+        <br/>
+        <table border="0px" cellpadding="0px">
+            <tr>
+                <td width="70px">链接</td>
+                <td><a href="${titleUrl}">${titleUrl}</a></td>
+            </tr>
+            <tr>
+                <td width="70px">评论人</td>
+                <td>${username}</td>
+            </tr>
+            <tr>
+                <td width="70px">内容</td>
+                <td>${content}</td>
+            </tr>
+        </table>
+        <br/>
+        <small>v${version}</small>
+    </div>
+</div>
