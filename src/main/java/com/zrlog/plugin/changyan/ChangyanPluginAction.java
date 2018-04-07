@@ -1,10 +1,10 @@
-package com.fzb.zrlog.plugin.changyan;
+package com.zrlog.plugin.changyan;
 
-import com.fzb.zrlog.plugin.IOSession;
-import com.fzb.zrlog.plugin.api.IPluginAction;
-import com.fzb.zrlog.plugin.data.codec.HttpRequestInfo;
-import com.fzb.zrlog.plugin.data.codec.MsgPacket;
-import com.fzb.zrlog.plugin.changyan.controller.ChangyanController;
+import com.zrlog.plugin.IOSession;
+import com.zrlog.plugin.api.IPluginAction;
+import com.zrlog.plugin.data.codec.HttpRequestInfo;
+import com.zrlog.plugin.data.codec.MsgPacket;
+import com.zrlog.plugin.changyan.controller.ChangyanController;
 
 public class ChangyanPluginAction implements IPluginAction {
     @Override

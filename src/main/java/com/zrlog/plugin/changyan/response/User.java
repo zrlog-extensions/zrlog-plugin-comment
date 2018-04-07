@@ -1,4 +1,4 @@
-package com.fzb.zrlog.plugin.changyan.response;
+package com.zrlog.plugin.changyan.response;
 
 public class User {
 	private String usericon;

@@ -1,8 +1,8 @@
-package com.fzb.zrlog.plugin.changyan;
+package com.zrlog.plugin.changyan;
 
 
-import com.fzb.zrlog.plugin.changyan.controller.ChangyanController;
-import com.fzb.zrlog.plugin.client.NioClient;
+import com.zrlog.plugin.changyan.controller.ChangyanController;
+import com.zrlog.plugin.client.NioClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class Start {
     public static void main(String[] args) throws IOException {
         List<Class> classList = new ArrayList<>();
         classList.add(ChangyanController.class);
-        new NioClient(new ChangyanClientActionHandler()).connectServerByProperties(args, classList, "/plugin.properties", ChangyanPluginAction.class);
+        new NioClient(new ChangyanClientActionHandler()).connectServer(args, classList, ChangyanPluginAction.class);
     }
 }
 

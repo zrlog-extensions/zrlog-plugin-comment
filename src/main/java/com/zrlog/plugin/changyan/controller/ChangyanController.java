@@ -1,20 +1,20 @@
-package com.fzb.zrlog.plugin.changyan.controller;
+package com.zrlog.plugin.changyan.controller;
 
-import com.fzb.zrlog.plugin.IMsgPacketCallBack;
-import com.fzb.zrlog.plugin.IOSession;
-import com.fzb.zrlog.plugin.changyan.response.ChangyanComment;
-import com.fzb.zrlog.plugin.changyan.response.CommentsEntry;
-import com.fzb.zrlog.plugin.client.ClientActionHandler;
-import com.fzb.zrlog.plugin.common.IdUtil;
-import com.fzb.zrlog.plugin.common.LoggerUtil;
-import com.fzb.zrlog.plugin.common.modle.Comment;
-import com.fzb.zrlog.plugin.common.modle.PublicInfo;
-import com.fzb.zrlog.plugin.data.codec.ContentType;
-import com.fzb.zrlog.plugin.data.codec.HttpRequestInfo;
-import com.fzb.zrlog.plugin.data.codec.MsgPacket;
-import com.fzb.zrlog.plugin.data.codec.MsgPacketStatus;
-import com.fzb.zrlog.plugin.render.TemplateRender;
-import com.fzb.zrlog.plugin.type.ActionType;
+import com.zrlog.plugin.IMsgPacketCallBack;
+import com.zrlog.plugin.IOSession;
+import com.zrlog.plugin.changyan.response.ChangyanComment;
+import com.zrlog.plugin.changyan.response.CommentsEntry;
+import com.zrlog.plugin.client.ClientActionHandler;
+import com.zrlog.plugin.common.IdUtil;
+import com.zrlog.plugin.common.LoggerUtil;
+import com.zrlog.plugin.common.modle.Comment;
+import com.zrlog.plugin.common.modle.PublicInfo;
+import com.zrlog.plugin.data.codec.ContentType;
+import com.zrlog.plugin.data.codec.HttpRequestInfo;
+import com.zrlog.plugin.data.codec.MsgPacket;
+import com.zrlog.plugin.data.codec.MsgPacketStatus;
+import com.zrlog.plugin.render.SimpleTemplateRender;
+import com.zrlog.plugin.type.ActionType;
 import com.google.gson.Gson;
 
 import java.net.URL;
@@ -70,6 +70,20 @@ public class ChangyanController {
 
     public void index() {
         session.responseHtml("/templates/index.html", new HashMap(), requestPacket.getMethodStr(), requestPacket.getMsgId());
+    }
+
+    public void widget() {
+        Map<String, Object> keyMap = new HashMap<>();
+        keyMap.put("key", "appId");
+        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
+            @Override
+            public void handler(MsgPacket msgPacket) {
+                Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
+                map.put("articleId", requestInfo.simpleParam().get("articleId"));
+                session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget.html", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
+            }
+        });
+
     }
 
     /**
@@ -136,7 +150,7 @@ public class ChangyanController {
                             moduleMap.put("titleUrl", changyanComment.getUrl());
                             moduleMap.put("username", comment.getName());
                             moduleMap.put("version", session.getPlugin().getVersion());
-                            map.put("content", new TemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
+                            map.put("content", new SimpleTemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
                             map.put("title", publicInfo.getTitle() + " 有了新的评论");
                             session.requestService("emailService", map);
                         }

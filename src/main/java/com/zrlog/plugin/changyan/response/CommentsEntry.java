@@ -1,4 +1,4 @@
-package com.fzb.zrlog.plugin.changyan.response;
+package com.zrlog.plugin.changyan.response;
 
 
 import java.util.List;
