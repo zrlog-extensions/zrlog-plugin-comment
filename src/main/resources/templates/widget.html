@@ -11,7 +11,7 @@
         var conf = 'prod_e3ec9450cef3977322648b62a820e338';
         var width = window.innerWidth || document.documentElement.clientWidth;
         if (width < 960) {
-            window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=' + appid + '&conf=' + conf + '"><\/script>');
+            window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=${appId}&conf=prod_e3ec9450cef3977322648b62a820e338$"><\/script>');
         } else {
             var loadJs = function (d, a) {
                 var c = document.getElementsByTagName("head")[0] || document.head || document.documentElement;
