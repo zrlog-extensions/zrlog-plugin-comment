@@ -2,7 +2,52 @@
 <div id="SOHUCS" sid="${articleId}"></div>
 <style>
     #SOHUCS #SOHU_MAIN .module-cmt-list .block-title-gw ul li {
-        background-color: #fff;
+        background-color: inherit;
+    }
+    #SOHUCS #SOHU_MAIN .module-cmt-list .wrap-build-gw .build-floor-gw {
+        background-color: inherit;
+    }
+    @media (prefers-color-scheme: dark) {
+        #SOHUCS #SOHU_MAIN {
+            color: #FFF;
+        }
+        #SOHUCS #SOHU_MAIN .module-hot-topic .topic .topic-list li a {
+            color: rgb(13,110,253)!important;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-header {
+            background-color: inherit;
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-header .mobile-header-head .header-comment-number .comment-text {
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-header .mobile-header-head .header-login {
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-box .mobile-cmt-box {
+            background: black;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-box .cmt-box-title-right {
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-list .list-wrapper-wap .list-header-wap .list-header-txt {
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-list .list-wrapper-wap .list-container-wap .list-item-wap .list-content-wrapper-wap .list-content-wap {
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-list .list-wrapper-wap .list-container-wap .list-build-wap .floor-item-wap {
+            background-color: inherit;
+        }
+        #SOHUCS #SOHU_MAIN .module-mobile-cmt-list .list-wrapper-wap .list-container-wap .list-build-wap .floor-item-wap .floor-content-wrapper-wap .floor-content-wap {
+            color: white;
+        }
+        #SOHUCS #SOHU_MAIN .section-newslist-w .title-name-w {
+            color: inherit;
+        }
+        #SOHUCS #SOHU_MAIN .module-cmt-box .post-wrap-w .post-wrap-main .area-textarea-e .textarea-fw {
+            color: inherit;
+        }
     }
 </style>
 <script type="text/javascript">
@@ -10,8 +55,14 @@
         var appid = '${appId}';
         var conf = 'prod_e3ec9450cef3977322648b62a820e338';
         var width = window.innerWidth || document.documentElement.clientWidth;
-        if (width < 960) {
-            window.document.write('<script id="changyan_mobile_js" charset="utf-8" type="text/javascript" src="//changyan.sohu.com/upload/mobile/wap-js/changyan_mobile.js?client_id=${appId}&conf=prod_e3ec9450cef3977322648b62a820e338$"><\/script>');
+        if (width < 1000) {
+            var head = document.getElementsByTagName('head')[0] || document.head || document.documentElement;
+            var script = document.createElement('script');
+            script.type = 'text/javascript';
+            script.charset = 'utf-8';
+            script.id = 'changyan_mobile_js';
+            script.src = `https://cy-cdn.kuaizhan.com/upload/mobile/wap-js/changyan_mobile.js?client_id=${appId}&conf=` + conf;
+            head.appendChild(script);
         } else {
             var loadJs = function (d, a) {
                 var c = document.getElementsByTagName("head")[0] || document.head || document.documentElement;
@@ -34,9 +85,8 @@
                 }
                 c.appendChild(b)
             };
-            loadJs("//changyan.sohu.com/upload/changyan.js", function () {
+            loadJs("https://cy-cdn.kuaizhan.com/upload/changyan.js", function () {
                 window.changyan.api.config({appid: appid, conf: conf})
             });
         }
-    })();
-</script>
+    })(); </script>

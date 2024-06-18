@@ -4,45 +4,45 @@ package com.zrlog.plugin.changyan.response;
 import java.util.List;
 
 public class CommentsEntry {
-    private Integer spcount;
-    private Integer cmtid;
-    private Integer apptype;
+    private Long spcount;
+    private Long cmtid;
+    private Long apptype;
     private String ip;
     private String useragent;
     private String content;
-    private Integer score;
+    private Long score;
     private List<Object> attachment;
-    private Integer opcount;
-    private Integer referid;
-    private Integer channeltype;
-    private Integer replyid;
+    private Long opcount;
+    private Long referid;
+    private Long channeltype;
+    private Long replyid;
     private Long ctime;
-    private Integer from;
+    private Long from;
     private User user;
-    private Integer channelid;
-    private Integer status;
+    private Long channelid;
+    private Long status;
 
-    public Integer getSpcount() {
+    public Long getSpcount() {
         return spcount;
     }
 
-    public void setSpcount(Integer spcount) {
+    public void setSpcount(Long spcount) {
         this.spcount = spcount;
     }
 
-    public Integer getCmtid() {
+    public Long getCmtid() {
         return cmtid;
     }
 
-    public void setCmtid(Integer cmtid) {
+    public void setCmtid(Long cmtid) {
         this.cmtid = cmtid;
     }
 
-    public Integer getApptype() {
+    public Long getApptype() {
         return apptype;
     }
 
-    public void setApptype(Integer apptype) {
+    public void setApptype(Long apptype) {
         this.apptype = apptype;
     }
 
@@ -70,11 +70,11 @@ public class CommentsEntry {
         this.content = content;
     }
 
-    public Integer getScore() {
+    public Long getScore() {
         return score;
     }
 
-    public void setScore(Integer score) {
+    public void setScore(Long score) {
         this.score = score;
     }
 
@@ -86,35 +86,35 @@ public class CommentsEntry {
         this.attachment = attachment;
     }
 
-    public Integer getOpcount() {
+    public Long getOpcount() {
         return opcount;
     }
 
-    public void setOpcount(Integer opcount) {
+    public void setOpcount(Long opcount) {
         this.opcount = opcount;
     }
 
-    public Integer getReferid() {
+    public Long getReferid() {
         return referid;
     }
 
-    public void setReferid(Integer referid) {
+    public void setReferid(Long referid) {
         this.referid = referid;
     }
 
-    public Integer getChanneltype() {
+    public Long getChanneltype() {
         return channeltype;
     }
 
-    public void setChanneltype(Integer channeltype) {
+    public void setChanneltype(Long channeltype) {
         this.channeltype = channeltype;
     }
 
-    public Integer getReplyid() {
+    public Long getReplyid() {
         return replyid;
     }
 
-    public void setReplyid(Integer replyid) {
+    public void setReplyid(Long replyid) {
         this.replyid = replyid;
     }
 
@@ -126,11 +126,11 @@ public class CommentsEntry {
         this.ctime = ctime;
     }
 
-    public Integer getFrom() {
+    public Long getFrom() {
         return from;
     }
 
-    public void setFrom(Integer from) {
+    public void setFrom(Long from) {
         this.from = from;
     }
 
@@ -142,19 +142,19 @@ public class CommentsEntry {
         this.user = user;
     }
 
-    public Integer getChannelid() {
+    public Long getChannelid() {
         return channelid;
     }
 
-    public void setChannelid(Integer channelid) {
+    public void setChannelid(Long channelid) {
         this.channelid = channelid;
     }
 
-    public Integer getStatus() {
+    public Long getStatus() {
         return status;
     }
 
-    public void setStatus(Integer status) {
+    public void setStatus(Long status) {
         this.status = status;
     }
 }

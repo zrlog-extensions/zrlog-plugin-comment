@@ -2,7 +2,7 @@ package com.zrlog.plugin.changyan.response;
 
 public class User {
 	private String usericon;
-	private Integer sohuPlusId;
+	private Long sohuPlusId;
 	private String nickname;
 
 	public String getUsericon() {
@@ -13,11 +13,11 @@ public class User {
 		this.usericon = usericon;
 	}
 
-	public Integer getSohuPlusId() {
+	public Long getSohuPlusId() {
 		return sohuPlusId;
 	}
 
-	public void setSohuPlusId(Integer sohuPlusId) {
+	public void setSohuPlusId(Long sohuPlusId) {
 		this.sohuPlusId = sohuPlusId;
 	}
 

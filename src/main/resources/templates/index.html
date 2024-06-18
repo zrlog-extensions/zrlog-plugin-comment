@@ -1,79 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>畅言设置</title>
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="assets/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="assets/css/font-awesome.min.css"/>
     <link rel="stylesheet" href="assets/css/jquery.gritter.css"/>
     <link rel="stylesheet" href="assets/css/bootstrap-switch.css"/>
 
     <script src="assets/js/jquery-2.0.3.min.js"></script>
+    <script src="assets/js/vue.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/jquery.gritter.min.js"></script>
-    <script src="assets/js/bootbox.min.js"></script>
     <script src="assets/js/bootstrap-switch.js"></script>
-    <script src="js/vue.js"></script>
+    <script src="assets/js/jquery.gritter.min.js"></script>
     <script src="js/setting.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+            font-variant: tabular-nums;
+            line-height: 1.5;
+            font-feature-settings: 'tnum';
+            background: transparent;
+        }
+
+        .dark {
+            background-color: #000;
+            color: #fff
+        }
+    </style>
 </head>
-<body>
-<div class="rows">
-    <div class="col-md-8">
+<body style="margin: 0" class="${theme}">
+<form role="form" id="ajaxchangyan" class="form-horizontal">
+    <div id="vue-div" style="width: 100%;max-width: 960px">
         <div class="page-header">
             <h3>
                 畅言设置
-                <!--<button id="refresh-btn" class="btn" style="float:right"><i class="icon-refresh"></i>&nbsp;同步数据</button>-->
             </h3>
         </div>
+        <div class="form-group">
+            <label class="col-md-3 control-label no-padding-right"> APP ID </label>
+            <div class="col-md-2">
+                <input name="appId" :value="val(changyan.appId)" class="form-control">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label no-padding-right"> APP KEY </label>
+            <div class="col-md-4">
+                <input name="appKey" :value="val(changyan.appKey)" class="form-control">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label no-padding-right"> 评论回推地址 </label>
+            <div class="col-md-9">
+                <input name="callbackUrl" :value="val(changyan.callbackUrl)" class="form-control">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label no-padding-right"> 是否启用 </label>
+            <div class="col-md-2">
+                <input type="hidden" name="status" id="statusVal">
+                <input id="status-switch" style="display:none" type="checkbox"/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-md-3 control-label no-padding-right"> 新评论邮件通知 </label>
+            <div class="col-md-2">
+                <input type="hidden" name="commentEmailNotify" id="commentEmailNotifyVal">
+                <input id="commentEmailNotify-switch" style="display:none" type="checkbox">
+            </div>
+        </div>
+        <hr/>
+        <div class="col-md-offset-3 col-md-9">
+            <button id="changyan" type="button" class="btn btn-info">
+                提交
+            </button>
+        </div>
     </div>
-</div>
-<div class="rows">
-    <div class="col-md-8" id="vue-div">
-        <form role="form" id="ajaxduoshuo" checkBox="status" class="form-horizontal">
-            <div class="form-group">
-                <label class="col-md-3 control-label no-padding-right"> APP ID </label>
-                <div class="col-md-2">
-                    <input name="appId" :value="val(changyan.appId)" class="form-control">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-md-3 control-label no-padding-right"> APP KEY </label>
-                <div class="col-md-4">
-                    <input name="appKey" :value="val(changyan.appKey)" class="form-control">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-md-3 control-label no-padding-right"> 评论回调地址 </label>
-                <div class="col-md-9">
-                    <input name="callbackUrl" :value="val(changyan.callbackUrl)" class="form-control">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-md-3 control-label no-padding-right"> 是否启用 </label>
-                <div class="col-md-2">
-                    <input type="hidden" name="status" value="off" id="statusVal">
-                    <input id="status-switch" style="display:none" type="checkbox"/>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="col-md-3 control-label no-padding-right"> 新评论邮件通知 </label>
-                <div class="col-md-2">
-                    <input type="hidden" name="commentEmailNotify" id="commentEmailNotifyVal" value="off">
-                    <input id="commentEmailNotify-switch" style="display:none" type="checkbox">
-                </div>
-            </div>
-            <hr/>
-            <div class="col-md-offset-3 col-md-9">
-                <button id="duoshuo" type="button" class="btn btn-info">
-                    <i class="icon-ok bigger-110"></i> 提交
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+</form>
 <input id="gritter-light" checked="" type="checkbox" style="display:none"/>
+<pre id="data" style="display: none">${data}</pre>
 </body>
 </html>

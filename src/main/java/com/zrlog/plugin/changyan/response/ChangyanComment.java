@@ -3,18 +3,18 @@ package com.zrlog.plugin.changyan.response;
 import java.util.*;
 
 public class ChangyanComment {
-	private Integer sourceid;
+	private Long sourceid;
 	private String metadata;
 	private List<CommentsEntry> comments;
 	private Long ttime;
 	private String title;
 	private String url;
 
-	public Integer getSourceid() {
+	public Long getSourceid() {
 		return sourceid;
 	}
 
-	public void setSourceid(Integer sourceid) {
+	public void setSourceid(Long sourceid) {
 		this.sourceid = sourceid;
 	}
 

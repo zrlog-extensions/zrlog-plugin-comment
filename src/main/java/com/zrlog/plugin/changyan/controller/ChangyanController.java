@@ -1,5 +1,6 @@
 package com.zrlog.plugin.changyan.controller;
 
+import com.google.gson.Gson;
 import com.zrlog.plugin.IMsgPacketCallBack;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.changyan.response.ChangyanComment;
@@ -7,31 +8,27 @@ import com.zrlog.plugin.changyan.response.CommentsEntry;
 import com.zrlog.plugin.client.ClientActionHandler;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
-import com.zrlog.plugin.common.modle.Comment;
-import com.zrlog.plugin.common.modle.PublicInfo;
+import com.zrlog.plugin.common.model.Comment;
+import com.zrlog.plugin.common.model.PublicInfo;
 import com.zrlog.plugin.data.codec.ContentType;
 import com.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.zrlog.plugin.data.codec.MsgPacket;
 import com.zrlog.plugin.data.codec.MsgPacketStatus;
 import com.zrlog.plugin.render.SimpleTemplateRender;
 import com.zrlog.plugin.type.ActionType;
-import com.google.gson.Gson;
 
 import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class ChangyanController {
 
-    private static Logger LOGGER = LoggerUtil.getLogger(ChangyanController.class);
+    private static final Logger LOGGER = LoggerUtil.getLogger(ChangyanController.class);
 
-    private IOSession session;
-    private MsgPacket requestPacket;
-    private HttpRequestInfo requestInfo;
+    private final IOSession session;
+    private final MsgPacket requestPacket;
+    private final HttpRequestInfo requestInfo;
 
     public ChangyanController(IOSession session, MsgPacket requestPacket, HttpRequestInfo requestInfo) {
         this.session = session;
@@ -50,7 +47,7 @@ public class ChangyanController {
         });
     }
 
-    public void info() {
+    public void index() {
         Map<String, Object> keyMap = new HashMap<>();
         keyMap.put("key", "appId,appKey,status,commentEmailNotify,callbackUrl");
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
@@ -63,25 +60,26 @@ public class ChangyanController {
                 if (map.get("callbackUrl") == null || "".equals(map.get("callbackUrl"))) {
                     map.put("callbackUrl", requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/sync/" + UUID.randomUUID().toString().replace("-", ""));
                 }
-                session.sendJsonMsg(map, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
+                Map<String, Object> data = new HashMap<>();
+                data.put("theme", Objects.equals(requestInfo.getHeader().get("Dark-Mode"), "true") ? "dark" : "light");
+                data.put("data", new Gson().toJson(map));
+                session.responseHtmlStr(new SimpleTemplateRender().render("/templates/index.html", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
             }
         });
-    }
 
-    public void index() {
-        session.responseHtml("/templates/index.html", new HashMap(), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
 
     public void widget() {
         Map<String, Object> keyMap = new HashMap<>();
         keyMap.put("key", "appId");
-        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
-            @Override
-            public void handler(MsgPacket msgPacket) {
-                Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
-                map.put("articleId", requestInfo.simpleParam().get("articleId"));
-                session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget.html", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
+        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
+            Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
+            String articleId = (String) requestInfo.simpleParam().get("articleId");
+            if (Objects.isNull(articleId)) {
+                articleId = "-1";
             }
+            map.put("articleId", articleId);
+            session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget.html", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
         });
 
     }
@@ -121,14 +119,7 @@ public class ChangyanController {
         if (changyanComment != null) {
             LOGGER.info("sync action " + changyanComment);
             for (CommentsEntry commentsEntry : changyanComment.getComments()) {
-                final Comment comment = new Comment();
-                comment.setName(commentsEntry.getUser().getNickname());
-                comment.setHeadPortrait(commentsEntry.getUser().getUsericon());
-                comment.setLogId(Long.valueOf(changyanComment.getSourceid()));
-                comment.setIp(commentsEntry.getIp());
-                comment.setContent(commentsEntry.getContent());
-                comment.setCreatedTime(new Date(commentsEntry.getCtime()));
-                comment.setPostId(commentsEntry.getCmtid().longValue());
+                final Comment comment = getComment(changyanComment, commentsEntry);
 
                 LOGGER.log(Level.INFO, "changyan call " + new Gson().toJson(comment));
                 session.sendMsg(ContentType.JSON, comment, ActionType.ADD_COMMENT.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, new IMsgPacketCallBack() {
@@ -158,5 +149,17 @@ public class ChangyanController {
                 }
             }
         }
+    }
+
+    private static Comment getComment(ChangyanComment changyanComment, CommentsEntry commentsEntry) {
+        final Comment comment = new Comment();
+        comment.setName(commentsEntry.getUser().getNickname());
+        comment.setHeadPortrait(commentsEntry.getUser().getUsericon());
+        comment.setLogId(changyanComment.getSourceid());
+        comment.setIp(commentsEntry.getIp());
+        comment.setContent(commentsEntry.getContent());
+        comment.setCreatedTime(new Date(commentsEntry.getCtime()));
+        comment.setPostId(commentsEntry.getCmtid());
+        return comment;
     }
 }
