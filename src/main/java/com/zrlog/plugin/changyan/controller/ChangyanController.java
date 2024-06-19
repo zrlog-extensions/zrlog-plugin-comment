@@ -60,6 +60,12 @@ public class ChangyanController {
                 if (map.get("callbackUrl") == null || "".equals(map.get("callbackUrl"))) {
                     map.put("callbackUrl", requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/sync/" + UUID.randomUUID().toString().replace("-", ""));
                 }
+                if(!Objects.equals(map.get("status"),"on")){
+                    map.remove("status");
+                }
+                if(!Objects.equals(map.get("commentEmailNotify"),"on")){
+                    map.remove("commentEmailNotify");
+                }
                 Map<String, Object> data = new HashMap<>();
                 data.put("theme", Objects.equals(requestInfo.getHeader().get("Dark-Mode"), "true") ? "dark" : "light");
                 data.put("data", new Gson().toJson(map));

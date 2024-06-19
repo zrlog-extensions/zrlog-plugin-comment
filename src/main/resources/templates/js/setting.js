@@ -1,7 +1,12 @@
 $(function () {
 
     const e = JSON.parse(document.getElementById("data").innerText);
-
+    if (e.commentEmailNotify === 'on') {
+        document.getElementById("commentEmailNotify").setAttribute('checked', "checked");
+    }
+    if (e.status === 'on') {
+        document.getElementById("status").setAttribute('checked', "checked");
+    }
 
     new Vue({
         el: '#vue-div',
@@ -16,22 +21,18 @@ $(function () {
         }
     })
 
-    // 初始化 bootstrap-switch
-    $("#commentEmailNotify-switch").bootstrapSwitch('state', e.commentEmailNotify === 'on');
-    $("#commentEmailNotifyVal").attr("value", e.commentEmailNotify);
-    $("#status-switch").bootstrapSwitch('state', e.status === 'on');
-    $("#statusVal").attr("value", e.status);
-
-    // 绑定 switchChange 事件
-    $('#commentEmailNotify-switch').on('switchChange.bootstrapSwitch', function (event, state) {
-        $("#commentEmailNotifyVal").attr("value", state ? "on" : "off");
+    $(".checkbox").map((e) => {
+        $($(".checkbox")[e]).on('click', (event) => {
+            if (event.target.checked) {
+                console.info(event);
+                document.getElementById(event.target.id + "Val").value = 'on';
+            } else {
+                document.getElementById(event.target.id + "Val").value = 'off';
+            }
+        });
     });
 
-    $('#status-switch').on('switchChange.bootstrapSwitch', function (event, state) {
-        $("#statusVal").attr("value", state ? "on" : "off");
-    });
-
-    $(".btn-info").click(function () {
+    $(".btn-primary").click(function () {
         const formId = "ajax" + $(this).attr("id");
         $.post('update', $("#" + formId).serialize(), function (data) {
             if (data.success || data.status === 200) {
