@@ -138,7 +138,6 @@
                                     -H:+BuildReport
                                     -H:+UnlockExperimentalVMOptions
                                     --allow-incomplete-classpath
-                                    --initialize-at-build-time=java.util.ImmutableCollections$ListN
                                     -march=compatibility
                                     --enable-preview
                                     -H:DashboardDump=${imageName}
