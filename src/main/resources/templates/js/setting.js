@@ -11,7 +11,7 @@ $(function () {
     new Vue({
         el: '#vue-div',
         data: {
-            changyan: e,
+            comment: e,
             version: e.version,
         },
         methods: {
