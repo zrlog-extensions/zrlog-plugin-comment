@@ -42,18 +42,19 @@ public class ChangyanController {
      */
     public void sync() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "short_name,secret,status,commentEmailNotify,callbackUrl");
+        keyMap.put("key", "changyan,commentEmailNotify");
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
-            Map<String, Object> changyan = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
+            Map<String, Object> data = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
+            Map<String, Object> changyan = new Gson().fromJson((String) data.get("changyan"), Map.class);
             String callbackUrl = (String) changyan.get("callbackUrl");
-            String ignoreChar = "/p" + "/" + session.getPlugin().getShortName();
+            String ignoreChar = "/p/" + session.getPlugin().getShortName();
             try {
                 if (callbackUrl != null && new URL(callbackUrl).getPath().replace(ignoreChar, "").equals(requestInfo.getUri().replace(".action", ""))) {
                     String commentJsonStr = requestInfo.getParam().get("data")[0];
                     LOGGER.info(commentJsonStr);
                     final ChangyanComment changyanComment = new Gson().fromJson(commentJsonStr, ChangyanComment.class);
                     Map<String, Object> response = new HashMap<>();
-                    dealSyncRequest(response, changyanComment, "on".equals(changyan.get("commentEmailNotify")));
+                    dealSyncRequest(response, changyanComment, "on".equals(data.get("commentEmailNotify")));
                 } else {
                     session.sendMsg(ContentType.HTML, ClientActionHandler.ACTION_NOT_FOUND_PAGE, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
                 }
