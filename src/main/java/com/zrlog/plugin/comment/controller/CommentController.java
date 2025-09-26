@@ -46,17 +46,14 @@ public class CommentController {
 
     public void index() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "appId,appKey,status,commentEmailNotify,callbackUrl");
+        keyMap.put("key", "changyang,base,commentEmailNotify,type");
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
             Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
             map.put("userName", requestInfo.getUserName());
             map.put("userId", requestInfo.getUserId());
             map.put("fullUrl", requestInfo.getFullUrl().replace("install", ""));
             if (map.get("callbackUrl") == null || "".equals(map.get("callbackUrl"))) {
-                map.put("callbackUrl", requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/sync/" + UUID.randomUUID().toString().replace("-", ""));
-            }
-            if (!Objects.equals(map.get("status"), "on")) {
-                map.remove("status");
+                map.put("callbackUrl", requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/changyan/sync/" + UUID.randomUUID().toString().replace("-", ""));
             }
             if (!Objects.equals(map.get("commentEmailNotify"), "on")) {
                 map.remove("commentEmailNotify");
@@ -84,73 +81,4 @@ public class CommentController {
 
     }
 
-    /**
-     * 反向同步接口
-     */
-    public void sync() {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "short_name,secret,status,commentEmailNotify,callbackUrl");
-        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
-            Map<String, Object> changyan = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
-            String callbackUrl = (String) changyan.get("callbackUrl");
-            String ignoreChar = "/p" + "/" + session.getPlugin().getShortName();
-            try {
-                if (callbackUrl != null && new URL(callbackUrl).getPath().replace(ignoreChar, "").equals(requestInfo.getUri().replace(".action", ""))) {
-                    String commentJsonStr = requestInfo.getParam().get("data")[0];
-                    LOGGER.info(commentJsonStr);
-                    final ChangyanComment changyanComment = new Gson().fromJson(commentJsonStr, ChangyanComment.class);
-                    Map<String, Object> response = new HashMap<>();
-                    dealSyncRequest(response, changyanComment, "on".equals(changyan.get("commentEmailNotify")));
-                } else {
-                    session.sendMsg(ContentType.HTML, ClientActionHandler.ACTION_NOT_FOUND_PAGE, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
-                }
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "", e);
-                session.sendMsg(ContentType.HTML, "Exception", requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
-            }
-        });
-
-    }
-
-    private void dealSyncRequest(final Map<String, Object> response, final ChangyanComment changyanComment, final boolean emailNotify) {
-        if (changyanComment != null) {
-            LOGGER.info("sync action " + changyanComment);
-            for (CommentsEntry commentsEntry : changyanComment.getComments()) {
-                final Comment comment = getComment(changyanComment, commentsEntry);
-
-                LOGGER.log(Level.INFO, "changyan call " + new Gson().toJson(comment));
-                session.sendMsg(ContentType.JSON, comment, ActionType.ADD_COMMENT.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
-                    response.put("status", msgPacket.getStatus() == MsgPacketStatus.RESPONSE_SUCCESS ? 200 : 500);
-                    session.sendMsg(ContentType.JSON, response, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
-                });
-                if (emailNotify) {
-                    session.sendMsg(ContentType.JSON, new HashMap<>(), ActionType.LOAD_PUBLIC_INFO.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
-                        PublicInfo publicInfo = msgPacket.convertToClass(PublicInfo.class);
-                        Map<String, String> map = new HashMap<>();
-                        Map<String, Object> moduleMap = new HashMap<>();
-                        moduleMap.put("content", comment.getContent());
-                        moduleMap.put("title", changyanComment.getTitle());
-                        moduleMap.put("titleUrl", changyanComment.getUrl());
-                        moduleMap.put("username", comment.getName());
-                        moduleMap.put("version", session.getPlugin().getVersion());
-                        map.put("content", new SimpleTemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
-                        map.put("title", publicInfo.getTitle() + " 有了新的评论");
-                        session.requestService("emailService", map);
-                    });
-                }
-            }
-        }
-    }
-
-    private static Comment getComment(ChangyanComment changyanComment, CommentsEntry commentsEntry) {
-        final Comment comment = new Comment();
-        comment.setName(commentsEntry.getUser().getNickname());
-        comment.setHeadPortrait(commentsEntry.getUser().getUsericon());
-        comment.setLogId(changyanComment.getSourceid());
-        comment.setIp(commentsEntry.getIp());
-        comment.setContent(commentsEntry.getContent());
-        comment.setCreatedTime(new Date(commentsEntry.getCtime()));
-        comment.setPostId(commentsEntry.getCmtid());
-        return comment;
-    }
 }
