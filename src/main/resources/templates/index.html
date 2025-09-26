@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>畅言设置</title>
+    <title>${plugin.name}</title>
     <meta charset="utf-8"/>
     <link rel="stylesheet" href="assets/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="assets/css/jquery.gritter.css"/>
@@ -46,12 +46,19 @@
 <body style="margin: 0" class="${theme}">
 <div class="page-header" style="padding-top: 20px">
     <h3>
-        畅言设置
+        ${plugin.name}
     </h3>
 </div>
 <div id="vue-div" style="width: 100%;max-width: 960px">
     <hr style="color: #a4a1a1"/>
     <form role="form" id="ajaxcomment" class="form-horizontal" style="width: 100%;">
+        <div class="form-group row mb-3">
+            <label class="col-md-3 control-label no-padding-right" for="type"> 类型 </label>
+            <div class="col-md-2">
+                <input name="appId" :value="val(comment.type)" id="type" class="form-control">
+            </div>
+        </div>
+
         <div class="form-group row mb-3">
             <label class="col-md-3 control-label no-padding-right" for="appId"> APP ID </label>
             <div class="col-md-2">
