@@ -1,12 +1,12 @@
-package com.zrlog.plugin.changyan;
+package com.zrlog.plugin.comment;
 
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.api.IPluginAction;
 import com.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.zrlog.plugin.data.codec.MsgPacket;
-import com.zrlog.plugin.changyan.controller.ChangyanController;
+import com.zrlog.plugin.comment.controller.CommentController;
 
-public class ChangyanPluginAction implements IPluginAction {
+public class CommentPluginAction implements IPluginAction {
     @Override
     public void start(IOSession ioSession, MsgPacket msgPacket) {
 
@@ -19,7 +19,7 @@ public class ChangyanPluginAction implements IPluginAction {
 
     @Override
     public void install(IOSession ioSession, MsgPacket msgPacket, HttpRequestInfo httpRequestInfo) {
-        new ChangyanController(ioSession, msgPacket, httpRequestInfo).index();
+        new CommentController(ioSession, msgPacket, httpRequestInfo).index();
     }
 
     @Override

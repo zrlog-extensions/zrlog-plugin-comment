@@ -1,4 +1,4 @@
-# changyan
+# zrlog-plugin-comment
 
 ```shell
 export JAVA_HOME=${HOME}/dev/graalvm-jdk-latest

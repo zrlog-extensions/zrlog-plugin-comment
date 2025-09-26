@@ -1,10 +1,10 @@
-package com.zrlog.plugin.changyan.controller;
+package com.zrlog.plugin.comment.controller;
 
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
-import com.zrlog.plugin.changyan.response.ChangyanComment;
-import com.zrlog.plugin.changyan.response.CommentsEntry;
 import com.zrlog.plugin.client.ClientActionHandler;
+import com.zrlog.plugin.comment.response.ChangyanComment;
+import com.zrlog.plugin.comment.response.CommentsEntry;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
@@ -21,15 +21,15 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class ChangyanController {
+public class CommentController {
 
-    private static final Logger LOGGER = LoggerUtil.getLogger(ChangyanController.class);
+    private static final Logger LOGGER = LoggerUtil.getLogger(CommentController.class);
 
     private final IOSession session;
     private final MsgPacket requestPacket;
     private final HttpRequestInfo requestInfo;
 
-    public ChangyanController(IOSession session, MsgPacket requestPacket, HttpRequestInfo requestInfo) {
+    public CommentController(IOSession session, MsgPacket requestPacket, HttpRequestInfo requestInfo) {
         this.session = session;
         this.requestPacket = requestPacket;
         this.requestInfo = requestInfo;
@@ -71,7 +71,7 @@ public class ChangyanController {
 
     public void widget() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "appId");
+        keyMap.put("key", "appId,type");
         session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
             Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
             String articleId = (String) requestInfo.simpleParam().get("articleId");
@@ -79,7 +79,7 @@ public class ChangyanController {
                 articleId = "-1";
             }
             map.put("articleId", articleId);
-            session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
+            session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget/" + keyMap.get("type") + "/index.html", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
         });
 
     }

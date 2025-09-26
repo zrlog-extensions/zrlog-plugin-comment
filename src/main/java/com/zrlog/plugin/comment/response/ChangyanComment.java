@@ -1,4 +1,4 @@
-package com.zrlog.plugin.changyan.response;
+package com.zrlog.plugin.comment.response;
 
 import java.util.*;
 

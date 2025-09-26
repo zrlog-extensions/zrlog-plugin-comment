@@ -13,5 +13,5 @@
 *.*~
 *.log
 !.mvn/wrapper/maven-wrapper.jar
-changyan.bgv
+comment.bgv
 *.lck

@@ -5,22 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.zrlog</groupId>
-    <artifactId>plugin-changyan</artifactId>
+    <artifactId>plugin-comment</artifactId>
     <version>3.2.14</version>
 
     <properties>
         <outputDirectory>/home/xiaochun/zrlog-plugin/</outputDirectory>
-        <imageName>changyan</imageName>
+        <imageName>comment</imageName>
         <native.maven.plugin.version>0.10.2</native.maven.plugin.version>
-        <native.image.mainClass>com.zrlog.plugin.changyan.Application</native.image.mainClass>
-        <native.image.agentMainClass>com.zrlog.plugin.changyan.GraalvmAgentApplication</native.image.agentMainClass>
+        <native.image.mainClass>com.zrlog.plugin.comment.Application</native.image.mainClass>
+        <native.image.agentMainClass>com.zrlog.plugin.comment.GraalvmAgentApplication</native.image.agentMainClass>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.hibegin</groupId>
             <artifactId>zrlog-plugin-common</artifactId>
-            <version>3.2.14</version>
+            <version>3.2.15</version>
         </dependency>
     </dependencies>
 
@@ -82,10 +82,10 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.zrlog.plugin.changyan.Application</mainClass>
+                            <mainClass>com.zrlog.plugin.comment.Application</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>changyan</finalName>
+                    <finalName>${imageName}</finalName>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>

@@ -7,7 +7,7 @@ java -version
 ./mvnw clean package
 ./mvnw -Pnative -Dagent exec:exec@java-agent -U
 ./mvnw -Pnative package
-binName=changyan
+binName=comment
 if [ -f "target/${binName}.exe" ];
 then
   echo "window"
