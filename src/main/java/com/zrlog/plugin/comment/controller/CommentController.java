@@ -105,9 +105,17 @@ public class CommentController {
         Map<String, Object> data = new HashMap<>();
         data.put("articleId", articleId);
         String type = (String) configMap.get("type");
-        if (Objects.equals(type, "base") || Objects.isNull(type) || type.trim().isEmpty()) {
+        if (Objects.isNull(type) || type.trim().isEmpty()) {
+            type = "base";
             data.put("type", "base");
         }
+        if (Objects.equals(type, "base")) {
+            fillBaseCommentInfo(configMap, data);
+        }
+        session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget/" + configMap.get("type") + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
+    }
+
+    private static void fillBaseCommentInfo(Map configMap, Map<String, Object> data) {
         Map map = Objects.nonNull(configMap.get("base")) ? new Gson().fromJson((String) configMap.get("base"), Map.class) : new HashMap<>();
         data.put("styleStr", map.get("styleStr"));
         String baseUrl = (String) map.get("baseUrl");
@@ -117,7 +125,6 @@ public class CommentController {
             data.put("commentUrl", baseUrl + "/p/comment/addComment");
         }
         data.put("comments", "");
-        session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget/" + configMap.get("type") + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
 
 }
