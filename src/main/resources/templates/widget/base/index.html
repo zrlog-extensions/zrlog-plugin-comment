@@ -1,3 +1,105 @@
-<div>
+<form action="${commentUrl}" method="post" class="comment-form">
+    <input type="hidden" name="logId" value="${articleId}">
+    <label for="userComment">评论内容</label>
+    <textarea id="userComment" name="userComment" required rows="6" placeholder="请输入您的评论..."></textarea>
 
-</div>
+    <div class="form-row">
+        <label for="web">网站</label>
+        <input id="web" name="web" type="text" required placeholder="https://example.com">
+    </div>
+
+    <div class="form-row">
+        <label for="userName">用户名</label>
+        <input id="userName" name="userName" type="text" required placeholder="请输入您的昵称">
+    </div>
+
+    <div class="form-row" style="max-width: 600px">
+        <label for="email">邮箱</label>
+        <input id="email" name="email" type="email" required placeholder="name@example.com">
+        <p class="email-tip">您的邮箱不会公开，仅用于接收通知。</p>
+    </div>
+
+    <button type="submit">提交</button>
+</form>
+
+<style>
+    .comment-form {
+        width: 100%; /* 占满父容器 */
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        font-family: Arial, sans-serif;
+    }
+
+    .comment-form h2 {
+        text-align: center;
+    }
+
+    .comment-form label {
+        font-weight: bold;
+    }
+
+    .comment-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        max-width: 320px;
+    }
+
+    .form-row label {
+        min-width: 60px;
+        text-align: right;
+    }
+
+    .form-row input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .comment-form textarea:focus,
+    .form-row input:focus {
+        border-color: #007BFF;
+        box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+        outline: none;
+    }
+
+    .comment-form button {
+        align-self: flex-start;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .comment-form button:hover {
+        background-color: #0056b3;
+    }
+
+    .email-tip {
+        font-size: 0.85rem;
+        color: #666;
+        text-align: right;
+    }
+</style>
+<style>
+    ${styleStr}
+</style>

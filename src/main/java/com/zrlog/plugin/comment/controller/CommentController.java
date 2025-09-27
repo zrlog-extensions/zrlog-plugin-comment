@@ -2,8 +2,10 @@ package com.zrlog.plugin.comment.controller;
 
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
+import com.zrlog.plugin.comment.dao.CommentDAO;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
+import com.zrlog.plugin.common.model.Comment;
 import com.zrlog.plugin.common.model.PublicInfo;
 import com.zrlog.plugin.data.codec.ContentType;
 import com.zrlog.plugin.data.codec.HttpRequestInfo;
@@ -12,10 +14,7 @@ import com.zrlog.plugin.data.codec.MsgPacketStatus;
 import com.zrlog.plugin.render.SimpleTemplateRender;
 import com.zrlog.plugin.type.ActionType;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class CommentController {
@@ -45,6 +44,21 @@ public class CommentController {
         session.sendJsonMsg(data(), requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
     }
 
+    public void addComment() {
+        Map map = requestInfo.simpleParam();
+        Comment comment = new Comment();
+        comment.setContent(map.get("userComment").toString());
+        comment.setHome(map.get("web").toString());
+        comment.setMail(map.get("email").toString());
+        comment.setHeadPortrait("");
+        comment.setName(map.get("userName").toString());
+        comment.setIp(requestInfo.getHeader().get("X-Real-IP"));
+        comment.setCreatedTime(new Date());
+        comment.setLogId(Long.parseLong((String) map.get("logId")));
+        CommentDAO.save(session, comment);
+        session.responseHtmlStr("success", requestPacket.getMethodStr(), requestPacket.getMsgId());
+    }
+
     private Map<String, Object> data() {
         Map<String, Object> keyMap = new HashMap<>();
         keyMap.put("key", "changyan,base,commentEmailNotify,type");
@@ -59,6 +73,7 @@ public class CommentController {
         }
         if (map.get("base") == null || "".equals(map.get("base"))) {
             Map<String, Object> defaultBase = new HashMap<>();
+            defaultBase.put("styleStr", "");
             map.put("base", new Gson().toJson(defaultBase));
         }
         if (Objects.isNull(map.get("type"))) {
@@ -81,17 +96,26 @@ public class CommentController {
 
     public void widget() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "appId,type");
-        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
-            Map map = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
-            String articleId = (String) requestInfo.simpleParam().get("articleId");
-            if (Objects.isNull(articleId)) {
-                articleId = "-1";
+        keyMap.put("key", "base,changyan,type");
+        Map configMap = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
+        String articleId = (String) requestInfo.simpleParam().get("articleId");
+        if (Objects.isNull(articleId)) {
+            articleId = "-1";
+        }
+        Map<String, Object> data = new HashMap<>();
+        data.put("articleId", articleId);
+        if (Objects.equals(configMap.get("type"), "base")) {
+            Map map = new Gson().fromJson((String) configMap.get("base"), Map.class);
+            data.put("styleStr", map.get("styleStr"));
+            String baseUrl = (String) map.get("baseUrl");
+            if (Objects.isNull(baseUrl) || Objects.equals(baseUrl, "")) {
+                data.put("commentUrl", "/p/comment/addComment");
+            } else {
+                data.put("commentUrl", baseUrl + "/p/comment/addComment");
             }
-            map.put("articleId", articleId);
-            session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget/" + keyMap.get("type") + "/index.html", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
-        });
-
+            data.put("comments", "");
+        }
+        session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget/" + configMap.get("type") + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
 
 }
