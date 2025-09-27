@@ -47,7 +47,7 @@ public class CommentController {
 
     private Map<String, Object> data() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "changyang,base,commentEmailNotify,type");
+        keyMap.put("key", "changyan,base,commentEmailNotify,type");
         Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
         map.put("userName", requestInfo.getUserName());
         map.put("userId", requestInfo.getUserId());
@@ -63,9 +63,6 @@ public class CommentController {
         }
         if (Objects.isNull(map.get("type"))) {
             map.put("type", "base");
-        }
-        if (!Objects.equals(map.get("commentEmailNotify"), "on")) {
-            map.remove("commentEmailNotify");
         }
         Map<String, Object> data = new HashMap<>();
         data.put("darkMode", Objects.equals(requestInfo.getHeader().get("Dark-Mode"), "true"));
