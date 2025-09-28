@@ -143,7 +143,9 @@ public class CommentController {
 
     private static void fillBaseCommentInfo(Map configMap, Map<String, Object> data) {
         Map map = Objects.nonNull(configMap.get("base")) ? new Gson().fromJson((String) configMap.get("base"), Map.class) : new HashMap<>();
-        data.put("styleStr", map.get("styleStr"));
+        data.putAll(map);
+        data.putIfAbsent("styleStr", "");
+        data.putIfAbsent("mainColor", "#1677ff");
         String baseUrl = (String) map.get("baseUrl");
         if (Objects.isNull(baseUrl) || Objects.equals(baseUrl, "")) {
             data.put("commentUrl", "/p/comment/addComment");
