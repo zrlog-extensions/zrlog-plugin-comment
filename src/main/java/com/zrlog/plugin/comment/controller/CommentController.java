@@ -51,7 +51,7 @@ public class CommentController {
         if (Objects.isNull(lodId)) {
             throw new RuntimeException("文章id 不能为空");
         }
-        String content = (String) map.get("content");
+        String content = (String) map.get("userComment");
         if (Objects.isNull(content) || content.trim().isEmpty()) {
             throw new RuntimeException("内容不能为空");
         }
