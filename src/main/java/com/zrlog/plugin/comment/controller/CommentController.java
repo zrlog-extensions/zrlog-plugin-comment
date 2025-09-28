@@ -47,17 +47,15 @@ public class CommentController {
 
     private void doComment() {
         Map map = requestInfo.simpleParam();
-
-        String content = (String) map.get("content");
-        Object lodId = map.get("lodId");
-        String userName = (String) map.get("userName");
+        Object lodId = map.get("logId");
         if (Objects.isNull(lodId)) {
             throw new RuntimeException("文章id 不能为空");
         }
+        String content = (String) map.get("content");
         if (Objects.isNull(content) || content.trim().isEmpty()) {
             throw new RuntimeException("内容不能为空");
-
         }
+        String userName = (String) map.get("userName");
         if (Objects.isNull(userName) || userName.trim().isEmpty()) {
             throw new RuntimeException("昵称不能为空");
         }
