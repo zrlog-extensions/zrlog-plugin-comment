@@ -3,6 +3,7 @@ package com.zrlog.plugin.comment.controller;
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.comment.dao.CommentDAO;
+import com.zrlog.plugin.comment.service.CommentService;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
@@ -111,8 +112,9 @@ public class CommentController {
         }
         if (Objects.equals(type, "base")) {
             fillBaseCommentInfo(configMap, data);
+            data.put("comments", new CommentService().renderBaseListCommentHtml(session, Long.parseLong(articleId)));
         }
-        session.responseHtmlStr(new SimpleTemplateRender().render("/templates/widget/" + configMap.get("type") + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
+        session.responseHtmlStr(new SimpleTemplateRender().render("/widget/" + type + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
 
     private static void fillBaseCommentInfo(Map configMap, Map<String, Object> data) {
@@ -124,7 +126,6 @@ public class CommentController {
         } else {
             data.put("commentUrl", baseUrl + "/p/comment/addComment");
         }
-        data.put("comments", "");
     }
 
 }

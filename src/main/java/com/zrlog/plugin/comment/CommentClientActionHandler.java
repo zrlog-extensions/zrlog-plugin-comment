@@ -6,16 +6,19 @@ import com.zrlog.plugin.client.ClientActionHandler;
 import com.zrlog.plugin.comment.controller.ChangyanController;
 import com.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.zrlog.plugin.data.codec.MsgPacket;
+import com.zrlog.plugin.data.codec.MsgPacketStatus;
 
 public class CommentClientActionHandler extends ClientActionHandler {
 
     @Override
     public void httpMethod(IOSession session, MsgPacket msgPacket) {
-        HttpRequestInfo httpRequestInfo = new Gson().fromJson(msgPacket.getDataStr(), HttpRequestInfo.class);
-        if (httpRequestInfo.getUri().startsWith("/changyan/sync/")) {
-            new ChangyanController(session, msgPacket, httpRequestInfo).sync();
-        } else {
-            super.httpMethod(session, msgPacket);
+        if (msgPacket.getStatus() == MsgPacketStatus.SEND_REQUEST) {
+            HttpRequestInfo httpRequestInfo = new Gson().fromJson(msgPacket.getDataStr(), HttpRequestInfo.class);
+            if (httpRequestInfo.getUri().startsWith("/changyan/sync/")) {
+                new ChangyanController(session, msgPacket, httpRequestInfo).sync();
+            } else {
+                super.httpMethod(session, msgPacket);
+            }
         }
     }
 }

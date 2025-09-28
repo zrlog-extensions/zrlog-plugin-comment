@@ -1,38 +1,40 @@
-<form action="${commentUrl}" method="post" class="comment-form">
-    <input type="hidden" name="logId" value="${articleId}">
-    <label for="userComment">评论内容</label>
-    <textarea id="userComment" name="userComment" required rows="6" placeholder="请输入您的评论..."></textarea>
+<div class="_comment">
+    ${comments}
+    <hr style="color:#ccc"/>
+    <form action="${commentUrl}" method="post" class="comment-form">
+        <input type="hidden" name="logId" value="${articleId}">
+        <textarea id="userComment" name="userComment" required rows="6" placeholder="请输入评论..."></textarea>
 
-    <div class="form-row">
-        <label for="web">网站</label>
-        <input id="web" name="web" type="text" required placeholder="https://example.com">
-    </div>
+        <div class="form-row">
+            <label for="web">网站</label>
+            <input id="web" name="web" type="text" required placeholder="https://example.com">
+        </div>
 
-    <div class="form-row">
-        <label for="userName">用户名</label>
-        <input id="userName" name="userName" type="text" required placeholder="请输入您的昵称">
-    </div>
+        <div class="form-row">
+            <label for="userName">昵称</label>
+            <input id="userName" name="userName" type="text" required placeholder="请输入昵称">
+        </div>
 
-    <div class="form-row" style="max-width: 600px">
-        <label for="email">邮箱</label>
-        <input id="email" name="email" type="email" required placeholder="name@example.com">
-        <p class="email-tip">您的邮箱不会公开，仅用于接收通知。</p>
-    </div>
+        <div class="form-row" style="max-width: 600px">
+            <label for="email">邮箱</label>
+            <input id="email" name="email" type="email" required placeholder="name@example.com">
+            <b class="email-tip">邮箱不会公开</b>
+        </div>
 
-    <button type="submit">提交</button>
-</form>
-
+        <button type="submit">评论</button>
+    </form>
+</div>
 <style>
+
+    ._comment li {
+        list-style: none;
+    }
+
     .comment-form {
         width: 100%; /* 占满父容器 */
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        font-family: Arial, sans-serif;
-    }
-
-    .comment-form h2 {
-        text-align: center;
     }
 
     .comment-form label {
@@ -47,6 +49,7 @@
         font-size: 1rem;
         box-sizing: border-box;
         transition: border-color 0.2s, box-shadow 0.2s;
+        resize: vertical;
     }
 
     .form-row {
@@ -99,6 +102,28 @@
         color: #666;
         text-align: right;
     }
+
+    .comment-item {
+        display: flex;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    .avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 4px;
+    }
+
+    .commentUserName {
+        font-size: 1rem;
+    }
+
+    .commentTime {
+        font-size: 14px;
+    }
+
 </style>
 <style>
     ${styleStr}

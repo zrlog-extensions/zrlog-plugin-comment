@@ -2,6 +2,7 @@ package com.zrlog.plugin.comment.dao;
 
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
+import com.zrlog.plugin.client.HttpClientUtils;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
@@ -11,7 +12,11 @@ import com.zrlog.plugin.data.codec.MsgPacketStatus;
 import com.zrlog.plugin.render.SimpleTemplateRender;
 import com.zrlog.plugin.type.ActionType;
 
-import java.util.*;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,7 +53,9 @@ public class CommentDAO {
         session.requestService("emailService", map);
     }
 
-    public static List<Comment> loadComments(IOSession session, Long articleId) {
-        return new ArrayList<>();
+    public static List<Map<String, Object>> loadComments(IOSession session, Long articleId) {
+        PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, new HashMap<>(), ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
+        Map map = HttpClientUtils.sendGetRequest(publicInfo.getApiHomeUrl() + "/api/article/comment?id=" + articleId, Map.class, new HashMap<>(), session, Duration.ofSeconds(30));
+        return (List<Map<String, Object>>) map.get("data");
     }
 }
