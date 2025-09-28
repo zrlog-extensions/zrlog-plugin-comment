@@ -1,5 +1,5 @@
 import React from "react";
-import {Button, Divider, Form, Input, message, Select, Switch} from "antd";
+import {Button, ColorPicker, Divider, Form, Input, message, Select, Switch} from "antd";
 import Title from "antd/es/typography/Title";
 import {Content} from "antd/es/layout/layout";
 import {BaseSetting, ChangyanSetting, PluginCoreInfoResponse} from "../index";
@@ -33,6 +33,17 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                                       styleStr: e.target.value,
                                   }
                               })}/>
+
+                </FormItem>
+                <FormItem label={"主色彩"}>
+                    <ColorPicker onChange={(e) => {
+                        setBase((prevState) => {
+                            return {
+                                ...prevState,
+                                mainColor: e.toHexString(),
+                            }
+                        })
+                    }} defaultValue={base.mainColor}/>
 
                 </FormItem>
                 <FormItem label={"评论 BaseURL"}>

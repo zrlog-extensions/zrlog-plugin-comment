@@ -25,6 +25,7 @@ export interface ChangyanSetting {
 export interface BaseSetting {
     styleStr: string;
     baseUrl: string;
+    mainColor: string;
 }
 
 export interface PluginSetting {
