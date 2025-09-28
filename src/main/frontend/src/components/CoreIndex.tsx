@@ -24,7 +24,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
 
     const getConfig = () => {
         if (type == "base") {
-            return <>
+            return <div key={"base"}>
                 <FormItem label={"评论框样式"}>
                     <TextArea placeholder={"css"} rows={6} defaultValue={base.styleStr}
                               onChange={(e) => setBase((prevState) => {
@@ -44,9 +44,9 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                                }
                            })}/>
                 </FormItem>
-            </>
+            </div>
         }
-        return <>
+        return <div key={"changyan"}>
             <FormItem label={"appId"}>
                 <Input placeholder={"appId"} defaultValue={changyan.appId} onChange={(e) => setChangyan((prevState) => {
                     return {
@@ -73,7 +73,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                            }
                        })}/>
             </FormItem>
-        </>;
+        </div>;
     }
 
     const onSubmit = async () => {
