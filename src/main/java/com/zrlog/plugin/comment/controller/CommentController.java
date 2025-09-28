@@ -45,19 +45,45 @@ public class CommentController {
         session.sendJsonMsg(data(), requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
     }
 
-    public void addComment() {
+    private void doComment() {
         Map map = requestInfo.simpleParam();
+
+        String content = (String) map.get("content");
+        Object lodId = map.get("lodId");
+        String userName = (String) map.get("userName");
+        if (Objects.isNull(lodId)) {
+            throw new RuntimeException("文章id 不能为空");
+        }
+        if (Objects.isNull(content) || content.trim().isEmpty()) {
+            throw new RuntimeException("内容不能为空");
+
+        }
+        if (Objects.isNull(userName) || userName.trim().isEmpty()) {
+            throw new RuntimeException("昵称不能为空");
+        }
+
         Comment comment = new Comment();
-        comment.setContent(map.get("userComment").toString());
-        comment.setHome(map.get("web").toString());
-        comment.setMail(map.get("email").toString());
+        comment.setContent(content);
+        comment.setName(userName);
+        comment.setLogId(Long.parseLong((String) lodId));
+        comment.setHome((String) map.get("web"));
+        comment.setMail((String) map.get("email"));
         comment.setHeadPortrait("");
-        comment.setName(map.get("userName").toString());
         comment.setIp(requestInfo.getHeader().get("X-Real-IP"));
         comment.setCreatedTime(new Date());
-        comment.setLogId(Long.parseLong((String) map.get("logId")));
         CommentDAO.save(session, comment);
-        session.responseHtmlStr("success", requestPacket.getMethodStr(), requestPacket.getMsgId());
+    }
+
+    public void addComment() {
+        Map<String, Object> map = new HashMap<>();
+        try {
+            doComment();
+            map.put("resultMsg", "评论成功");
+        } catch (Exception e) {
+            map.put("resultMsg", e.getMessage());
+        } finally {
+            session.responseHtmlStr(new SimpleTemplateRender().render("/result/comment", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
+        }
     }
 
     private Map<String, Object> data() {
