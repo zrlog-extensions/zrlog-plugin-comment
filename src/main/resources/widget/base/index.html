@@ -1,5 +1,7 @@
 <div class="_comment">
-    ${comments}
+    <ul>
+        ${comments}
+    </ul>
     <hr style="color:#ccc"/>
     <form action="${commentUrl}" method="post" class="comment-form">
         <input type="hidden" name="logId" value="${articleId}">
@@ -122,6 +124,10 @@
 
     .commentTime {
         font-size: 14px;
+    }
+
+    .totalComment {
+        font-size: 0.85rem;
     }
 
 </style>

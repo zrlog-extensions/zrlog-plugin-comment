@@ -17,6 +17,7 @@ public class CommentService {
         try {
             List<Map<String, Object>> maps = CommentDAO.loadComments(session, articleId);
             StringBuilder sb = new StringBuilder();
+            sb.append("<span class='totalComment'>").append(maps.size()).append(" 条评论</span>");
             for (Map<String, Object> map : maps) {
                 sb.append(new SimpleTemplateRender().render("/widget/base/comment", session.getPlugin(), map));
             }
