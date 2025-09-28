@@ -1,8 +1,7 @@
 <div class="_comment">
-    <ul>
+    <div class="comment-list">
         ${comments}
-    </ul>
-    <hr style="color:#ccc"/>
+    </div>
     <form action="${commentUrl}" method="post" class="comment-form">
         <input type="hidden" name="logId" value="${articleId}">
         <textarea id="userComment" name="userComment" required rows="6" placeholder="请输入评论..."></textarea>
@@ -28,8 +27,10 @@
 </div>
 <style>
 
-    ._comment li {
-        list-style: none;
+    .comment-list {
+        display: flex;
+        flex-flow: column;
+        gap: 16px;
     }
 
     .comment-form {
@@ -48,6 +49,7 @@
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 6px;
+        margin-top: 16px;
         font-size: 1rem;
         box-sizing: border-box;
         transition: border-color 0.2s, box-shadow 0.2s;
@@ -109,7 +111,6 @@
         display: flex;
         justify-content: flex-start;
         gap: 1rem;
-        padding-bottom: 1rem;
     }
 
     .avatar {
@@ -127,7 +128,8 @@
     }
 
     .totalComment {
-        font-size: 0.85rem;
+        font-size: 1rem;
+        line-height: 2rem;
     }
 
 </style>
