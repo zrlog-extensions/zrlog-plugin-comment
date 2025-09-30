@@ -105,7 +105,7 @@ public class CommentController {
             map.put("type", "base");
         }
         Map<String, Object> data = new HashMap<>();
-        data.put("darkMode", Objects.equals(requestInfo.getHeader().get("Dark-Mode"), "true"));
+        data.put("theme", Objects.equals(requestInfo.getHeader().get("Dark-Mode"), "true") ? "dark" : "light");
         data.put("setting", map);
         PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, data, ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
         data.put("primaryColor", publicInfo.getAdminColorPrimary());
