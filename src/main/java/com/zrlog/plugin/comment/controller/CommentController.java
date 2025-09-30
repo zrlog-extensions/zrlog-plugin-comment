@@ -137,6 +137,14 @@ public class CommentController {
         if (Objects.equals(type, "base")) {
             fillBaseCommentInfo(configMap, data);
             data.put("comments", new CommentService().renderBaseListCommentHtml(session, Long.parseLong(articleId)));
+        } else if (Objects.equals(type, "changyan")) {
+            Map map = Objects.nonNull(configMap.get("changyan")) ? new Gson().fromJson((String) configMap.get("changyan"), Map.class) : new HashMap<>();
+            String appId = (String) map.get("appId");
+            if (Objects.nonNull(appId)) {
+                data.put("appId", appId);
+            } else {
+                data.put("appId", "");
+            }
         }
         session.responseHtmlStr(new SimpleTemplateRender().render("/widget/" + type + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
