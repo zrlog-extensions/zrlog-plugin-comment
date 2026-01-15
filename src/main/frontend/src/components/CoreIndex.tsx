@@ -26,7 +26,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
         if (type == "base") {
             return <Form key={"base"}>
                 <FormItem label={"评论框样式"}>
-                    <TextArea placeholder={"css,"} rows={6} defaultValue={base.styleStr}
+                    <TextArea placeholder={".avatar {}"} rows={6} defaultValue={base.styleStr}
                               onChange={(e) => setBase((prevState) => {
                                   return {
                                       ...prevState,
@@ -43,8 +43,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                                 mainColor: e.toHexString(),
                             }
                         })
-                    }} defaultValue={base.mainColor}/>
-
+                    }} defaultValue={base.mainColor}
+                    />
                 </FormItem>
                 <FormItem label={"评论 BaseURL"}>
                     <Input placeholder={"https://example.com/"} defaultValue={base.baseUrl}

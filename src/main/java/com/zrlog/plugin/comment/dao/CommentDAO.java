@@ -27,10 +27,10 @@ public class CommentDAO {
     public static void save(IOSession session, Comment comment) {
         LOGGER.log(Level.INFO, "new comment " + new Gson().toJson(comment));
         session.sendMsg(ContentType.JSON, comment, ActionType.ADD_COMMENT.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, addMsgPacket -> {
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", addMsgPacket.getStatus() == MsgPacketStatus.RESPONSE_SUCCESS ? 200 : 500);
-            session.sendMsg(ContentType.JSON, response, addMsgPacket.getMethodStr(), addMsgPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
-            tryNotify(session, comment);
+            //Map<String, Object> response = new HashMap<>();
+            if (addMsgPacket.getStatus() == MsgPacketStatus.RESPONSE_SUCCESS) {
+                tryNotify(session, comment);
+            }
         });
     }
 

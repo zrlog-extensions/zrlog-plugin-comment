@@ -19,9 +19,8 @@
         <div style="display: flex;align-items: center">
             <div class="form-row">
                 <label for="email">邮箱</label>
-                <input id="email" name="email" type="email" required placeholder="name@example.com">
+                <input id="email" name="email" type="email" required placeholder="name@example.com, 邮箱不会公开">
             </div>
-            <b class="email-tip">邮箱不会公开</b>
         </div>
 
         <button type="submit">提交</button>
@@ -82,6 +81,7 @@
         font-size: 1rem;
         box-sizing: border-box;
         transition: border-color 0.2s, box-shadow 0.2s;
+        width: 100%;
     }
 
     .comment-form textarea:focus,
@@ -104,12 +104,6 @@
 
     .comment-form button:hover {
         background-color: var(--comment-main-color);
-    }
-
-    .email-tip {
-        font-size: 0.85rem;
-        color: #666;
-        padding-left: 16px;
     }
 
     .comment-item {
