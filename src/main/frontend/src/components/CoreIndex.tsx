@@ -1,139 +1,382 @@
 import React from "react";
-import {Button, ColorPicker, Divider, Form, Input, message, Select, Switch} from "antd";
-import Title from "antd/es/typography/Title";
-import {Content} from "antd/es/layout/layout";
+import {
+    Button,
+    ColorPicker,
+    Divider,
+    Form,
+    Input,
+    message,
+    Select,
+    Switch,
+    Table,
+    Modal,
+    Tag,
+    Card
+} from "antd";
+import {
+    SettingOutlined,
+    ReloadOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    InfoCircleOutlined
+} from "@ant-design/icons";
 import {BaseSetting, ChangyanSetting, PluginCoreInfoResponse} from "../index";
-import {Option} from "rc-select";
 import axios from "axios";
-import FormItem from "antd/es/form/FormItem";
-import TextArea from "antd/es/input/TextArea";
-
+import styled from "styled-components";
 
 type CoreIndexProps = {
     data: PluginCoreInfoResponse;
 }
 
+const Shell = styled.div<{ $dark: boolean }>`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+`;
+
+const HeaderPanel = styled.div<{ $dark: boolean }>`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: ${props => props.$dark ? "#1f1f1f" : "#ffffff"};
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid ${props => props.$dark ? "#303030" : "#f0f0f0"};
+  transition: all 0.3s ease;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const MainTitle = styled.h1<{ $dark: boolean }>`
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: ${props => props.$dark ? "#ffffff" : "#1f1f1f"};
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const Subtitle = styled.div<{ $dark: boolean }>`
+  font-size: 13px;
+  color: ${props => props.$dark ? "#8c8c8c" : "#555555"};
+`;
+
+const Actions = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const LogCard = styled(Card)<{ $dark: boolean }>`
+  background: ${props => props.$dark ? "#1f1f1f" : "#ffffff"} !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid ${props => props.$dark ? "#303030" : "#f0f0f0"} !important;
+  overflow: hidden;
+  
+  .antd-card-body {
+    padding: 20px !important;
+  }
+`;
+
+const FormScrollArea = styled.div`
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  overflow-x: hidden;
+`;
+
+const InfoBox = styled.div<{ $dark: boolean }>`
+  background: ${props => props.$dark ? "#141414" : "#fafafa"};
+  padding: 12px 16px;
+  border-radius: 8px;
+  border-left: 4px solid #1677ff;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: ${props => props.$dark ? "#bfbfbf" : "#666666"};
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+`;
+
 const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
+    const isDark = data.dark;
 
-    const [changyan, setChangyan] = React.useState<ChangyanSetting>(JSON.parse(data.setting.changyan));
-    const [base, setBase] = React.useState<BaseSetting>(JSON.parse(data.setting.base));
-    const [type, setType] = React.useState<string>(data.setting.type);
-    const [commentEmailNotify, setCommentEmailNotify] = React.useState<boolean>(data.setting.commentEmailNotify);
-    const [messageApi, contextHolder] = message.useMessage({maxCount: 3});
-    const [loading, setLoading] = React.useState<boolean>(false);
-
-    const getConfig = () => {
-        if (type == "base") {
-            return <Form key={"base"}>
-                <FormItem label={"评论框样式"}>
-                    <TextArea placeholder={".avatar {}"} rows={6} defaultValue={base.styleStr}
-                              onChange={(e) => setBase((prevState) => {
-                                  return {
-                                      ...prevState,
-                                      styleStr: e.target.value,
-                                  }
-                              })}/>
-
-                </FormItem>
-                <FormItem label={"主色彩"}>
-                    <ColorPicker onChange={(e) => {
-                        setBase((prevState) => {
-                            return {
-                                ...prevState,
-                                mainColor: e.toHexString(),
-                            }
-                        })
-                    }} defaultValue={base.mainColor}
-                    />
-                </FormItem>
-                <FormItem label={"评论 BaseURL"}>
-                    <Input placeholder={"https://example.com/"} defaultValue={base.baseUrl}
-                           onChange={(e) => setBase((prevState) => {
-                               return {
-                                   ...prevState,
-                                   baseUrl: e.target.value,
-                               }
-                           })}/>
-                </FormItem>
-            </Form>
-        }
-        return <Form key={"changyan"}>
-            <FormItem label={"appId"}>
-                <Input placeholder={"appId"} defaultValue={changyan.appId} onChange={(e) => setChangyan((prevState) => {
-                    return {
-                        ...prevState,
-                        appId: e.target.value,
-                    }
-                })}/>
-            </FormItem>
-            <FormItem label={"appKey"}>
-                <Input placeholder={"appKey"} defaultValue={changyan.appKey}
-                       onChange={(e) => setChangyan((prevState) => {
-                           return {
-                               ...prevState,
-                               appKey: e.target.value,
-                           }
-                       })}/>
-            </FormItem>
-            <FormItem label={"回调地址"}>
-                <Input placeholder={"回调地址"} defaultValue={changyan.callbackUrl}
-                       onChange={(e) => setChangyan((prevState) => {
-                           return {
-                               ...prevState,
-                               callbackUrl: e.target.value,
-                           }
-                       })}/>
-            </FormItem>
-        </Form>;
-    }
-
-    const onSubmit = async () => {
-        setLoading(true);
-        const params = new URLSearchParams();
-        params.set("type", type);
-        params.set("commentEmailNotify", (commentEmailNotify ? commentEmailNotify : false) + "")
-        params.set("changyan", JSON.stringify(changyan));
-        params.set("base", JSON.stringify(base));
+    const [changyan, setChangyan] = React.useState<ChangyanSetting>(() => {
         try {
-            await axios.post("update", params.toString());
-            messageApi.info("保存成功");
-        } finally {
-            setLoading(false);
+            return JSON.parse(data.setting.changyan);
+        } catch (e) {
+            return { appId: "", appKey: "", callbackUrl: "" };
         }
-    }
+    });
+    
+    const [base, setBase] = React.useState<BaseSetting>(() => {
+        try {
+            return JSON.parse(data.setting.base);
+        } catch (e) {
+            return { styleStr: "", baseUrl: "", mainColor: "" };
+        }
+    });
+
+    const [type, setType] = React.useState<string>(data.setting.type || "base");
+    const [commentEmailNotify, setCommentEmailNotify] = React.useState<boolean>(data.setting.commentEmailNotify || false);
+    const [history, setHistory] = React.useState<any[]>(() => {
+        try {
+            return data.setting.syncHistory ? (typeof data.setting.syncHistory === "string" ? JSON.parse(data.setting.syncHistory) : data.setting.syncHistory) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
+    const [messageApi, contextHolder] = message.useMessage({maxCount: 3});
+    const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
+    const [saveLoading, setSaveLoading] = React.useState<boolean>(false);
+    const [tableLoading, setTableLoading] = React.useState<boolean>(false);
+    const [formType, setFormType] = React.useState<string>(type);
+
+    const [form] = Form.useForm();
+
+    const reloadData = async () => {
+        setTableLoading(true);
+        try {
+            const { data: res } = await axios.get("json");
+            if (res.setting) {
+                setChangyan(JSON.parse(res.setting.changyan));
+                setBase(JSON.parse(res.setting.base));
+                setType(res.setting.type || "base");
+                setCommentEmailNotify(res.setting.commentEmailNotify || false);
+                
+                let historyList = [];
+                if (res.setting.syncHistory) {
+                    historyList = typeof res.setting.syncHistory === "string" ? JSON.parse(res.setting.syncHistory) : res.setting.syncHistory;
+                }
+                setHistory(historyList);
+            }
+            messageApi.success("数据已刷新");
+        } catch (e) {
+            messageApi.error("刷新数据失败");
+        } finally {
+            setTableLoading(false);
+        }
+    };
+
+    const handleSave = async (values: any) => {
+        setSaveLoading(true);
+        try {
+            const updatedChangyan = {
+                appId: values.appId || "",
+                appKey: values.appKey || "",
+                callbackUrl: values.callbackUrl || changyan.callbackUrl,
+            };
+            const updatedBase = {
+                styleStr: values.styleStr || "",
+                mainColor: typeof values.mainColor === "string" ? values.mainColor : (values.mainColor?.toHexString?.() || values.mainColor || ""),
+                baseUrl: values.baseUrl || "",
+            };
+
+            const params = new URLSearchParams();
+            params.set("type", values.type);
+            params.set("commentEmailNotify", (values.commentEmailNotify ? "true" : "false"));
+            params.set("changyan", JSON.stringify(updatedChangyan));
+            params.set("base", JSON.stringify(updatedBase));
+
+            const { data: res } = await axios.post("update", params.toString());
+            if (res.success) {
+                messageApi.success("保存配置成功");
+                setSettingsVisible(false);
+                setTimeout(reloadData, 500);
+            } else {
+                messageApi.error("保存失败");
+            }
+        } catch (e: any) {
+            messageApi.error("保存请求失败: " + e.message);
+        } finally {
+            setSaveLoading(false);
+        }
+    };
+
+    const openSettings = () => {
+        setFormType(type);
+        form.setFieldsValue({
+            type,
+            commentEmailNotify,
+            appId: changyan.appId,
+            appKey: changyan.appKey,
+            callbackUrl: changyan.callbackUrl,
+            styleStr: base.styleStr,
+            mainColor: base.mainColor || "#1677ff",
+            baseUrl: base.baseUrl
+        });
+        setSettingsVisible(true);
+    };
+
+    const columns = [
+        {
+            title: "日志记录时间",
+            dataIndex: "time",
+            key: "time",
+            width: 180,
+            render: (text: string) => <span style={{ fontFamily: "monospace" }}>{text}</span>
+        },
+        {
+            title: "操作日志/消息",
+            dataIndex: "message",
+            key: "message",
+            render: (text: string) => <span>{text}</span>
+        },
+        {
+            title: "同步/变更数量",
+            dataIndex: "count",
+            key: "count",
+            width: 130,
+            align: "center" as const,
+            render: (count: number) => count > 0 ? <Tag color="blue">{count} 条</Tag> : <span style={{ color: "#bfbfbf" }}>-</span>,
+        },
+        {
+            title: "执行状态",
+            dataIndex: "success",
+            key: "success",
+            width: 110,
+            align: "center" as const,
+            render: (success: boolean) => (
+                <Tag color={success ? "success" : "error"} icon={success ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
+                    {success ? "成功" : "失败"}
+                </Tag>
+            ),
+        },
+    ];
 
     return (
-        <Content style={{maxWidth: 600}}>
+        <Shell $dark={isDark}>
             {contextHolder}
-            <Title style={{
-                marginBottom: 0,
-                fontWeight: 600,
-                fontSize: "24px",
-                lineHeight: 1.35,
-                marginTop: "20px",
-                borderLeft: "3px solid " + data.primaryColor,
-                paddingLeft: "5px"
-            }} level={3}>
-                {data.plugin.name}设置
-            </Title>
-            <Divider/>
-            <Form.Item label={"新评论邮件通知"}>
-                <Switch defaultValue={commentEmailNotify} onChange={(e) => setCommentEmailNotify(e)}/>
-            </Form.Item>
-            <Form.Item label={"评论框类型"}>
-                <Select onChange={setType} defaultValue={type} style={{maxWidth: 120}}>
-                    <Option value={"base"}>默认</Option>
-                    <Option value={"changyan"}>畅言</Option>
-                </Select>
-            </Form.Item>
-            {getConfig()}
-            <Divider/>
-            <Button type="primary" loading={loading} htmlType="submit" onClick={async () => {
-                await onSubmit()
-            }}>
-                提交
-            </Button>
-        </Content>
+            
+            <HeaderPanel $dark={isDark}>
+                <HeaderLeft>
+                    <MainTitle $dark={isDark}>
+                        <div style={{ width: 6, height: 24, borderRadius: 3, background: data.primaryColor || "#1677ff" }} />
+                        {data.plugin.name} 管理中心
+                    </MainTitle>
+                    <Subtitle $dark={isDark}>
+                        版本号: v{data.plugin.version} | 当前模式: <Tag color={type === "base" ? "processing" : "warning"}>{type === "base" ? "默认评论框" : "畅言评论框"}</Tag>
+                    </Subtitle>
+                </HeaderLeft>
+                
+                <Actions>
+                    <Button 
+                        type="default" 
+                        icon={<ReloadOutlined />} 
+                        loading={tableLoading} 
+                        onClick={reloadData}
+                    >
+                        刷新日志
+                    </Button>
+                    <Button 
+                        type="primary" 
+                        icon={<SettingOutlined />} 
+                        onClick={openSettings}
+                        style={{ background: data.primaryColor }}
+                    >
+                        配置参数
+                    </Button>
+                </Actions>
+            </HeaderPanel>
+
+            <LogCard $dark={isDark} title="操作与反向同步日志">
+                <Table 
+                    columns={columns} 
+                    dataSource={history.map((item, idx) => ({ ...item, key: idx })).reverse()} 
+                    loading={tableLoading}
+                    pagination={{ pageSize: 10, size: "small" }}
+                    locale={{ emptyText: "暂无操作与同步历史日志" }}
+                    size="middle"
+                />
+            </LogCard>
+
+            <Modal
+                title={`${data.plugin.name} 配置面板`}
+                open={settingsVisible}
+                onOk={() => form.submit()}
+                onCancel={() => setSettingsVisible(false)}
+                okButtonProps={{ loading: saveLoading, style: { background: data.primaryColor } }}
+                destroyOnClose
+                width={620}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSave}
+                    style={{ marginTop: 16 }}
+                >
+                    <FormScrollArea>
+                        <InfoBox $dark={isDark}>
+                            <InfoCircleOutlined style={{ marginTop: 2, color: "#1677ff" }} />
+                            <div>
+                                配置项保存后将自动记录到数据库持久化日志中。如果使用畅言模式，请确保填写正确的 appId 和 appKey 以保障数据抓取反向同步。
+                            </div>
+                        </InfoBox>
+
+                        <Form.Item label="评论框类型" name="type" rules={[{ required: true }]}>
+                            <Select onChange={setFormType}>
+                                <Select.Option value="base">默认评论框</Select.Option>
+                                <Select.Option value="changyan">畅言评论框</Select.Option>
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item label="开启新评论邮件通知" name="commentEmailNotify" valuePropName="checked">
+                            <Switch />
+                        </Form.Item>
+
+                        <Divider />
+
+                        {formType === "base" ? (
+                            <React.Fragment>
+                                <Form.Item label="自定义评论框 CSS 样式" name="styleStr">
+                                    <Input.TextArea placeholder=".comment-item { border-bottom: 1px solid #eee; }" rows={5} />
+                                </Form.Item>
+                                
+                                <Form.Item label="主色彩" name="mainColor">
+                                    <ColorPicker showText />
+                                </Form.Item>
+
+                                <Form.Item label="评论根 URL (BaseURL)" name="baseUrl" tooltip="默认为空表示采用本插件自带API">
+                                    <Input placeholder="https://example.com" />
+                                </Form.Item>
+                            </React.Fragment>
+                        ) : (
+                            <React.Fragment>
+                                <Form.Item label="App ID (畅言)" name="appId" rules={[{ required: true, message: "请输入畅言 App ID" }]}>
+                                    <Input placeholder="请输入畅言 appId" />
+                                </Form.Item>
+
+                                <Form.Item label="App Key (畅言)" name="appKey" rules={[{ required: true, message: "请输入畅言 App Key" }]}>
+                                    <Input.Password placeholder="请输入畅言 appKey" />
+                                </Form.Item>
+
+                                <Form.Item label="回调同步接口 URL" name="callbackUrl" tooltip="后端自动计算，不可修改">
+                                    <Input disabled />
+                                </Form.Item>
+                            </React.Fragment>
+                        )}
+                    </FormScrollArea>
+                </Form>
+            </Modal>
+        </Shell>
     );
 };
 

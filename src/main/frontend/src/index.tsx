@@ -33,6 +33,7 @@ export interface PluginSetting {
     base: string;
     type: "changyan" | "base";
     commentEmailNotify: boolean;
+    syncHistory?: string;
 }
 
 export interface Plugin {
@@ -50,9 +51,23 @@ export interface Plugin {
     dependentService: string[]
 }
 
+import { createGlobalStyle } from "styled-components";
+
+const GlobalStyle = createGlobalStyle`
+  body {
+      background-color: #f5f7fa;
+      color: #1f1f1f;
+      transition: background-color 0.2s, color 0.2s;
+  }
+  body.dark {
+      background-color: #141414;
+      color: #dfdfdf;
+  }
+`;
+
 const loadFromDocument = () => {
     try {
-        const a = document.getElementById("pluginInfo");
+        const a = document.getElementById("data") || document.getElementById("pluginInfo");
         if (a === null || a.innerText.length === 0) {
             return null;
         }
@@ -68,13 +83,35 @@ const covertData = (data: PluginCoreInfoResponse) => {
 
 const Index = () => {
     const [pluginInfo, setPluginInfo] = useState<PluginCoreInfoResponse | null>(loadFromDocument);
+    const [isDark, setIsDark] = useState<boolean>(pluginInfo?.dark || false);
 
     useEffect(() => {
         if (pluginInfo === null) {
             axios.get("json").then(({data}) => {
                 setPluginInfo(covertData(data));
+                setIsDark(data.dark);
             });
         }
+    }, []);
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            const hasDark = document.body.classList.contains("dark");
+            setIsDark(hasDark);
+        });
+
+        observer.observe(document.body, {
+            attributes: true,
+            attributeFilter: ["class"]
+        });
+
+        // Initial detection
+        const hasDark = document.body.classList.contains("dark");
+        setIsDark(hasDark);
+
+        return () => {
+            observer.disconnect();
+        };
     }, []);
 
     if (pluginInfo === null) {
@@ -85,7 +122,7 @@ const Index = () => {
         <ConfigProvider
             locale={zh_CN}
             theme={{
-                algorithm: pluginInfo.dark ? darkAlgorithm : defaultAlgorithm,
+                algorithm: isDark ? darkAlgorithm : defaultAlgorithm,
                 token: {
                     colorPrimary: pluginInfo.primaryColor
                 }
@@ -102,10 +139,11 @@ const Index = () => {
                     },
                 }}
         >
+            <GlobalStyle />
             <BrowserRouter>
                 <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
                     <App>
-                        <AppBase pluginInfo={pluginInfo}/>
+                        <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
                     </App>
                 </StyleProvider>
             </BrowserRouter>
