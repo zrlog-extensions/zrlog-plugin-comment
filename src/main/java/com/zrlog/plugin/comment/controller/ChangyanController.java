@@ -23,6 +23,8 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.zrlog.plugin.comment.service.CommentService;
+
 public class ChangyanController {
 
     private static final Logger LOGGER = LoggerUtil.getLogger(ChangyanController.class);
@@ -66,12 +68,23 @@ public class ChangyanController {
 
     private void dealSyncRequest(final ChangyanComment changyanComment) {
         if (Objects.isNull(changyanComment)) {
+            CommentService.recordSyncHistory(session, false, 0, "反向同步失败：数据包为空");
             return;
         }
         LOGGER.info("sync action " + changyanComment);
-        for (CommentsEntry commentsEntry : changyanComment.getComments()) {
-            final Comment comment = getComment(changyanComment, commentsEntry);
-            CommentDAO.save(session, comment);
+        int count = 0;
+        try {
+            if (changyanComment.getComments() != null) {
+                for (CommentsEntry commentsEntry : changyanComment.getComments()) {
+                    final Comment comment = getComment(changyanComment, commentsEntry);
+                    CommentDAO.save(session, comment);
+                    count++;
+                }
+            }
+            CommentService.recordSyncHistory(session, true, count, "反向同步畅言评论 " + count + " 条成功");
+        } catch (Exception e) {
+            CommentService.recordSyncHistory(session, false, count, "反向同步失败: " + e.getMessage());
+            throw e;
         }
     }
 

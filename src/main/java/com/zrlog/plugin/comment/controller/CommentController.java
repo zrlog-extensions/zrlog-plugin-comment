@@ -35,6 +35,7 @@ public class CommentController {
     public void update() {
         session.sendMsg(new MsgPacket(requestInfo.simpleParam(), ContentType.JSON, MsgPacketStatus.SEND_REQUEST, IdUtil.getInt(),
                 ActionType.SET_WEBSITE.name()), msgPacket -> {
+            CommentService.recordSyncHistory(session, true, 0, "更新插件配置参数成功");
             Map<String, Object> map = new HashMap<>();
             map.put("success", true);
             session.sendMsg(new MsgPacket(map, ContentType.JSON, MsgPacketStatus.RESPONSE_SUCCESS, requestPacket.getMsgId(), requestPacket.getMethodStr()));
@@ -43,6 +44,20 @@ public class CommentController {
 
     public void json() {
         session.sendJsonMsg(data(), requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
+    }
+
+    public void history() {
+        Map<String, Object> keyMap = new HashMap<>();
+        keyMap.put("key", "syncHistory");
+        Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
+        String historyJson = map != null ? (String) map.get("syncHistory") : null;
+        List historyList;
+        if (historyJson == null || historyJson.trim().isEmpty()) {
+            historyList = new ArrayList<>();
+        } else {
+            historyList = new Gson().fromJson(historyJson, List.class);
+        }
+        session.sendJsonMsg(historyList, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
     }
 
     private void doComment() {
@@ -86,7 +101,7 @@ public class CommentController {
 
     private Map<String, Object> data() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "changyan,base,commentEmailNotify,type");
+        keyMap.put("key", "changyan,base,commentEmailNotify,type,syncHistory");
         Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
         map.put("userName", requestInfo.getUserName());
         map.put("userId", requestInfo.getUserId());
