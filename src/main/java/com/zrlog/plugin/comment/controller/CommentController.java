@@ -7,7 +7,6 @@ import com.zrlog.plugin.comment.service.CommentService;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
-import com.zrlog.plugin.common.model.PublicInfo;
 import com.zrlog.plugin.data.codec.ContentType;
 import com.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.zrlog.plugin.data.codec.MsgPacket;
@@ -120,10 +119,9 @@ public class CommentController {
             map.put("type", "base");
         }
         Map<String, Object> data = new HashMap<>();
-        data.put("theme", Objects.equals(requestInfo.getHeader().get("Dark-Mode"), "true") ? "dark" : "light");
+        data.put("theme", requestInfo.isDarkMode() ? "dark" : "light");
         data.put("setting", map);
-        PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, data, ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
-        data.put("primaryColor", publicInfo.getAdminColorPrimary());
+        data.put("primaryColor", requestInfo.getAdminColorPrimary());
         data.put("plugin", session.getPlugin());
         return data;
     }

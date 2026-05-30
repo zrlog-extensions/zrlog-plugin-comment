@@ -22,7 +22,7 @@
         <dependency>
             <groupId>com.hibegin</groupId>
             <artifactId>zrlog-plugin-common</artifactId>
-            <version>3.3.0</version>
+            <version>4.0.1</version>
         </dependency>
     </dependencies>
 
