@@ -7,7 +7,6 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
-    "sourceRoot": "src",
     "lib": [
       "dom",
       "es2017"

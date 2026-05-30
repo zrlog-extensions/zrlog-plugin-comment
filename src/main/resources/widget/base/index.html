@@ -28,8 +28,12 @@
 </div>
 <style>
 
-    :root {
-        --comment-main-color: ${mainColor}
+    ._comment {
+        --comment-main-color: ${mainColor};
+        --comment-border-color: rgba(0, 0, 0, 0.18);
+        --comment-input-bg: transparent;
+        --comment-placeholder-color: rgba(0, 0, 0, 0.45);
+        color: inherit;
     }
 
     .comment-list {
@@ -52,7 +56,9 @@
     .comment-form textarea {
         width: 100%;
         padding: 10px;
-        border: 1px solid #ccc;
+        color: inherit;
+        background: var(--comment-input-bg);
+        border: 1px solid var(--comment-border-color);
         border-radius: 6px;
         margin-top: 16px;
         font-size: 1rem;
@@ -76,12 +82,19 @@
     .form-row input {
         flex: 1;
         padding: 10px;
-        border: 1px solid #ccc;
+        color: inherit;
+        background: var(--comment-input-bg);
+        border: 1px solid var(--comment-border-color);
         border-radius: 6px;
         font-size: 1rem;
         box-sizing: border-box;
         transition: border-color 0.2s, box-shadow 0.2s;
         width: 100%;
+    }
+
+    .comment-form textarea::placeholder,
+    .form-row input::placeholder {
+        color: var(--comment-placeholder-color);
     }
 
     .comment-form textarea:focus,
@@ -115,6 +128,23 @@
     .comment-content {
         word-break: break-word;
         white-space: break-spaces;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        ._comment {
+            --comment-border-color: rgba(255, 255, 255, 0.24);
+            --comment-input-bg: rgba(255, 255, 255, 0.04);
+            --comment-placeholder-color: rgba(255, 255, 255, 0.45);
+        }
+    }
+
+    .dark ._comment,
+    [data-theme="dark"] ._comment,
+    [data-theme-mode="dark"] ._comment,
+    [data-theme-effective="dark"] ._comment {
+        --comment-border-color: rgba(255, 255, 255, 0.24);
+        --comment-input-bg: rgba(255, 255, 255, 0.04);
+        --comment-placeholder-color: rgba(255, 255, 255, 0.45);
     }
 
     .avatar {

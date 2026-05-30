@@ -120,8 +120,10 @@ public class CommentController {
         }
         Map<String, Object> data = new HashMap<>();
         data.put("theme", requestInfo.isDarkMode() ? "dark" : "light");
+        data.put("dark", requestInfo.isDarkMode());
         data.put("setting", map);
         data.put("primaryColor", requestInfo.getAdminColorPrimary());
+        data.put("colorPrimary", requestInfo.getAdminColorPrimary());
         data.put("plugin", session.getPlugin());
         return data;
     }

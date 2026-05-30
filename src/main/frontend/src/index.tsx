@@ -6,12 +6,15 @@ import {App, ConfigProvider, theme} from "antd";
 import {BrowserRouter} from "react-router-dom";
 import AppBase from "./AppBase";
 import axios from "axios";
+import {createGlobalStyle} from "styled-components";
 
 const {darkAlgorithm, defaultAlgorithm} = theme;
 
 export interface PluginCoreInfoResponse {
     dark: boolean
+    theme?: string
     primaryColor: string
+    colorPrimary?: string
     plugin: Plugin;
     setting: PluginSetting
 }
@@ -51,17 +54,13 @@ export interface Plugin {
     dependentService: string[]
 }
 
-import { createGlobalStyle } from "styled-components";
-
-const GlobalStyle = createGlobalStyle`
+const GlobalStyle = createGlobalStyle<{ $token: any; $dark: boolean }>`
   body {
-      background-color: #f5f7fa;
-      color: #1f1f1f;
+      margin: 0;
+      background-color: ${props => props.$token.colorBgLayout};
+      color: ${props => props.$token.colorText};
+      color-scheme: ${props => props.$dark ? "dark" : "light"};
       transition: background-color 0.2s, color 0.2s;
-  }
-  body.dark {
-      background-color: #141414;
-      color: #dfdfdf;
   }
 `;
 
@@ -78,8 +77,29 @@ const loadFromDocument = () => {
 }
 
 const covertData = (data: PluginCoreInfoResponse) => {
-    return data;
+    return {
+        ...data,
+        dark: data.dark ?? data.theme === "dark",
+        primaryColor: data.primaryColor || data.colorPrimary || "#1677ff",
+    };
 }
+
+const IndexContent = ({pluginInfo, isDark}: { pluginInfo: PluginCoreInfoResponse; isDark: boolean }) => {
+    const {token} = theme.useToken();
+
+    return (
+        <>
+            <GlobalStyle $token={token} $dark={isDark}/>
+            <BrowserRouter>
+                <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
+                    <App>
+                        <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
+                    </App>
+                </StyleProvider>
+            </BrowserRouter>
+        </>
+    );
+};
 
 const Index = () => {
     const [pluginInfo, setPluginInfo] = useState<PluginCoreInfoResponse | null>(loadFromDocument);
@@ -88,16 +108,26 @@ const Index = () => {
     useEffect(() => {
         if (pluginInfo === null) {
             axios.get("json").then(({data}) => {
-                setPluginInfo(covertData(data));
-                setIsDark(data.dark);
+                const nextPluginInfo = covertData(data);
+                setPluginInfo(nextPluginInfo);
+                setIsDark(nextPluginInfo.dark);
             });
         }
     }, []);
 
     useEffect(() => {
+        const detectDark = () => {
+            if (document.body.classList.contains("dark")) {
+                return true;
+            }
+            if (document.body.classList.contains("light")) {
+                return false;
+            }
+            return pluginInfo?.dark || false;
+        };
+
         const observer = new MutationObserver(() => {
-            const hasDark = document.body.classList.contains("dark");
-            setIsDark(hasDark);
+            setIsDark(detectDark());
         });
 
         observer.observe(document.body, {
@@ -106,13 +136,12 @@ const Index = () => {
         });
 
         // Initial detection
-        const hasDark = document.body.classList.contains("dark");
-        setIsDark(hasDark);
+        setIsDark(detectDark());
 
         return () => {
             observer.disconnect();
         };
-    }, []);
+    }, [pluginInfo?.dark]);
 
     if (pluginInfo === null) {
         return <></>
@@ -139,14 +168,7 @@ const Index = () => {
                     },
                 }}
         >
-            <GlobalStyle />
-            <BrowserRouter>
-                <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
-                    <App>
-                        <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
-                    </App>
-                </StyleProvider>
-            </BrowserRouter>
+            <IndexContent pluginInfo={pluginInfo} isDark={isDark}/>
         </ConfigProvider>
     );
 };

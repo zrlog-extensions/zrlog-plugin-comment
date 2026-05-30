@@ -11,7 +11,8 @@ import {
     Table,
     Modal,
     Tag,
-    Card
+    Card,
+    theme
 } from "antd";
 import {
     SettingOutlined,
@@ -28,7 +29,7 @@ type CoreIndexProps = {
     data: PluginCoreInfoResponse;
 }
 
-const Shell = styled.div<{ $dark: boolean }>`
+const Shell = styled.div<{ $token: any }>`
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
@@ -37,17 +38,18 @@ const Shell = styled.div<{ $dark: boolean }>`
   flex-direction: column;
   gap: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: ${props => props.$token.colorText};
 `;
 
-const HeaderPanel = styled.div<{ $dark: boolean }>`
+const HeaderPanel = styled.div<{ $token: any }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: ${props => props.$dark ? "#1f1f1f" : "#ffffff"};
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border: 1px solid ${props => props.$dark ? "#303030" : "#f0f0f0"};
+  background: ${props => props.$token.colorBgContainer};
+  border-radius: ${props => props.$token.borderRadiusLG}px;
+  box-shadow: ${props => props.$token.boxShadowTertiary || "none"};
+  border: 1px solid ${props => props.$token.colorBorderSecondary};
   transition: all 0.3s ease;
 
   @media (max-width: 600px) {
@@ -63,19 +65,19 @@ const HeaderLeft = styled.div`
   gap: 6px;
 `;
 
-const MainTitle = styled.h1<{ $dark: boolean }>`
+const MainTitle = styled.h1<{ $token: any }>`
   margin: 0;
   font-size: 22px;
   font-weight: 600;
-  color: ${props => props.$dark ? "#ffffff" : "#1f1f1f"};
+  color: ${props => props.$token.colorTextHeading};
   display: flex;
   align-items: center;
   gap: 8px;
 `;
 
-const Subtitle = styled.div<{ $dark: boolean }>`
+const Subtitle = styled.div<{ $token: any }>`
   font-size: 13px;
-  color: ${props => props.$dark ? "#8c8c8c" : "#555555"};
+  color: ${props => props.$token.colorTextDescription};
 `;
 
 const Actions = styled.div`
@@ -83,14 +85,14 @@ const Actions = styled.div`
   gap: 12px;
 `;
 
-const LogCard = styled(Card)<{ $dark: boolean }>`
-  background: ${props => props.$dark ? "#1f1f1f" : "#ffffff"} !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid ${props => props.$dark ? "#303030" : "#f0f0f0"} !important;
+const LogCard = styled(Card)<{ $token: any }>`
+  background: ${props => props.$token.colorBgContainer} !important;
+  border-radius: ${props => props.$token.borderRadiusLG}px !important;
+  box-shadow: ${props => props.$token.boxShadowTertiary || "none"} !important;
+  border: 1px solid ${props => props.$token.colorBorderSecondary} !important;
   overflow: hidden;
   
-  .antd-card-body {
+  .ant-card-body {
     padding: 20px !important;
   }
 `;
@@ -102,21 +104,22 @@ const FormScrollArea = styled.div`
   overflow-x: hidden;
 `;
 
-const InfoBox = styled.div<{ $dark: boolean }>`
-  background: ${props => props.$dark ? "#141414" : "#fafafa"};
+const InfoBox = styled.div<{ $token: any }>`
+  background: ${props => props.$token.colorFillTertiary};
   padding: 12px 16px;
-  border-radius: 8px;
-  border-left: 4px solid #1677ff;
+  border-radius: ${props => props.$token.borderRadius}px;
+  border-left: 4px solid ${props => props.$token.colorPrimary};
   margin-bottom: 20px;
   font-size: 13px;
-  color: ${props => props.$dark ? "#bfbfbf" : "#666666"};
+  color: ${props => props.$token.colorTextSecondary};
   display: flex;
   align-items: flex-start;
   gap: 8px;
 `;
 
 const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
-    const isDark = data.dark;
+    const {token} = theme.useToken();
+    const colorPrimary = data.primaryColor || data.colorPrimary || token.colorPrimary;
 
     const [changyan, setChangyan] = React.useState<ChangyanSetting>(() => {
         try {
@@ -220,7 +223,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
             appKey: changyan.appKey,
             callbackUrl: changyan.callbackUrl,
             styleStr: base.styleStr,
-            mainColor: base.mainColor || "#1677ff",
+            mainColor: base.mainColor || colorPrimary,
             baseUrl: base.baseUrl
         });
         setSettingsVisible(true);
@@ -246,7 +249,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
             key: "count",
             width: 130,
             align: "center" as const,
-            render: (count: number) => count > 0 ? <Tag color="blue">{count} 条</Tag> : <span style={{ color: "#bfbfbf" }}>-</span>,
+            render: (count: number) => count > 0 ? <Tag color="blue">{count} 条</Tag> : <span style={{ color: token.colorTextTertiary }}>-</span>,
         },
         {
             title: "执行状态",
@@ -263,16 +266,16 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
     ];
 
     return (
-        <Shell $dark={isDark}>
+        <Shell $token={token}>
             {contextHolder}
             
-            <HeaderPanel $dark={isDark}>
+            <HeaderPanel $token={token}>
                 <HeaderLeft>
-                    <MainTitle $dark={isDark}>
-                        <div style={{ width: 6, height: 24, borderRadius: 3, background: data.primaryColor || "#1677ff" }} />
+                    <MainTitle $token={token}>
+                        <div style={{ width: 6, height: 24, borderRadius: 3, background: colorPrimary }} />
                         {data.plugin.name} 管理中心
                     </MainTitle>
-                    <Subtitle $dark={isDark}>
+                    <Subtitle $token={token}>
                         版本号: v{data.plugin.version} | 当前模式: <Tag color={type === "base" ? "processing" : "warning"}>{type === "base" ? "默认评论框" : "畅言评论框"}</Tag>
                     </Subtitle>
                 </HeaderLeft>
@@ -290,14 +293,13 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                         type="primary" 
                         icon={<SettingOutlined />} 
                         onClick={openSettings}
-                        style={{ background: data.primaryColor }}
                     >
                         配置参数
                     </Button>
                 </Actions>
             </HeaderPanel>
 
-            <LogCard $dark={isDark} title="操作与反向同步日志">
+            <LogCard $token={token} title="操作与反向同步日志">
                 <Table 
                     columns={columns} 
                     dataSource={history.map((item, idx) => ({ ...item, key: idx })).reverse()} 
@@ -313,7 +315,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 open={settingsVisible}
                 onOk={() => form.submit()}
                 onCancel={() => setSettingsVisible(false)}
-                okButtonProps={{ loading: saveLoading, style: { background: data.primaryColor } }}
+                okButtonProps={{ loading: saveLoading }}
                 destroyOnClose
                 width={620}
             >
@@ -324,8 +326,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                     style={{ marginTop: 16 }}
                 >
                     <FormScrollArea>
-                        <InfoBox $dark={isDark}>
-                            <InfoCircleOutlined style={{ marginTop: 2, color: "#1677ff" }} />
+                        <InfoBox $token={token}>
+                            <InfoCircleOutlined style={{ marginTop: 2, color: colorPrimary }} />
                             <div>
                                 配置项保存后将自动记录到数据库持久化日志中。如果使用畅言模式，请确保填写正确的 appId 和 appKey 以保障数据抓取反向同步。
                             </div>
