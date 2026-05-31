@@ -6,7 +6,6 @@ import {App, ConfigProvider, theme} from "antd";
 import {BrowserRouter} from "react-router-dom";
 import AppBase from "./AppBase";
 import axios from "axios";
-import {createGlobalStyle} from "styled-components";
 
 const {darkAlgorithm, defaultAlgorithm} = theme;
 
@@ -54,16 +53,6 @@ export interface Plugin {
     dependentService: string[]
 }
 
-const GlobalStyle = createGlobalStyle<{ $token: any; $dark: boolean }>`
-  body {
-      margin: 0;
-      background-color: ${props => props.$token.colorBgLayout};
-      color: ${props => props.$token.colorText};
-      color-scheme: ${props => props.$dark ? "dark" : "light"};
-      transition: background-color 0.2s, color 0.2s;
-  }
-`;
-
 const loadFromDocument = () => {
     try {
         const a = document.getElementById("data") || document.getElementById("pluginInfo");
@@ -85,63 +74,29 @@ const covertData = (data: PluginCoreInfoResponse) => {
 }
 
 const IndexContent = ({pluginInfo, isDark}: { pluginInfo: PluginCoreInfoResponse; isDark: boolean }) => {
-    const {token} = theme.useToken();
-
     return (
-        <>
-            <GlobalStyle $token={token} $dark={isDark}/>
-            <BrowserRouter>
-                <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
-                    <App>
-                        <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
-                    </App>
-                </StyleProvider>
-            </BrowserRouter>
-        </>
+        <BrowserRouter>
+            <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
+                <App>
+                    <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
+                </App>
+            </StyleProvider>
+        </BrowserRouter>
     );
 };
 
 const Index = () => {
     const [pluginInfo, setPluginInfo] = useState<PluginCoreInfoResponse | null>(loadFromDocument);
-    const [isDark, setIsDark] = useState<boolean>(pluginInfo?.dark || false);
+    const isDark = pluginInfo?.dark || false;
 
     useEffect(() => {
         if (pluginInfo === null) {
             axios.get("json").then(({data}) => {
                 const nextPluginInfo = covertData(data);
                 setPluginInfo(nextPluginInfo);
-                setIsDark(nextPluginInfo.dark);
             });
         }
     }, []);
-
-    useEffect(() => {
-        const detectDark = () => {
-            if (document.body.classList.contains("dark")) {
-                return true;
-            }
-            if (document.body.classList.contains("light")) {
-                return false;
-            }
-            return pluginInfo?.dark || false;
-        };
-
-        const observer = new MutationObserver(() => {
-            setIsDark(detectDark());
-        });
-
-        observer.observe(document.body, {
-            attributes: true,
-            attributeFilter: ["class"]
-        });
-
-        // Initial detection
-        setIsDark(detectDark());
-
-        return () => {
-            observer.disconnect();
-        };
-    }, [pluginInfo?.dark]);
 
     if (pluginInfo === null) {
         return <></>
