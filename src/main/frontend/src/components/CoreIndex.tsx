@@ -12,6 +12,7 @@ import {
     Modal,
     Tag,
     Card,
+    Grid,
     theme
 } from "antd";
 import {
@@ -39,6 +40,15 @@ const Shell = styled.div<{ $token: any }>`
   gap: 20px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: ${props => props.$token.colorText};
+
+  @media (max-width: 1024px) {
+    padding: 16px;
+  }
+
+  @media (max-width: 575px) {
+    padding: 12px;
+    gap: 12px;
+  }
 `;
 
 const HeaderPanel = styled.div<{ $token: any }>`
@@ -52,10 +62,14 @@ const HeaderPanel = styled.div<{ $token: any }>`
   border: 1px solid ${props => props.$token.colorBorderSecondary};
   transition: all 0.3s ease;
 
-  @media (max-width: 600px) {
+  @media (max-width: 900px) {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  @media (max-width: 575px) {
+    padding: 16px;
   }
 `;
 
@@ -73,6 +87,11 @@ const MainTitle = styled.h1<{ $token: any }>`
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: 575px) {
+    font-size: 20px;
+    line-height: 28px;
+  }
 `;
 
 const Subtitle = styled.div<{ $token: any }>`
@@ -83,6 +102,15 @@ const Subtitle = styled.div<{ $token: any }>`
 const Actions = styled.div`
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+
+  @media (max-width: 575px) {
+    width: 100%;
+
+    .ant-btn {
+      flex: 1;
+    }
+  }
 `;
 
 const LogCard = styled(Card)<{ $token: any }>`
@@ -94,6 +122,14 @@ const LogCard = styled(Card)<{ $token: any }>`
   
   .ant-card-body {
     padding: 20px !important;
+
+    @media (max-width: 900px) {
+      padding: 16px !important;
+    }
+
+    @media (max-width: 575px) {
+      padding: 12px !important;
+    }
   }
 `;
 
@@ -119,6 +155,8 @@ const InfoBox = styled.div<{ $token: any }>`
 
 const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
     const {token} = theme.useToken();
+    const screens = Grid.useBreakpoint();
+    const isPhone = Boolean(screens.xs && !screens.sm);
     const colorPrimary = data.primaryColor || data.colorPrimary || token.colorPrimary;
 
     const [changyan, setChangyan] = React.useState<ChangyanSetting>(() => {
@@ -306,7 +344,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                     loading={tableLoading}
                     pagination={{ pageSize: 10, size: "small" }}
                     locale={{ emptyText: "暂无操作与同步历史日志" }}
-                    size="middle"
+                    scroll={{x: 760}}
+                    size={isPhone ? "small" : "middle"}
                 />
             </LogCard>
 
@@ -317,7 +356,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 onCancel={() => setSettingsVisible(false)}
                 okButtonProps={{ loading: saveLoading }}
                 destroyOnClose
-                width={620}
+                width={isPhone ? "calc(100vw - 24px)" : 620}
             >
                 <Form
                     form={form}
