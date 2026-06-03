@@ -2,12 +2,13 @@ import {createRoot} from "react-dom/client";
 import zh_CN from "antd/es/locale/zh_CN";
 import {legacyLogicalPropertiesTransformer, StyleProvider} from "@ant-design/cssinjs";
 import {useEffect, useState} from "react";
-import {App, ConfigProvider, theme} from "antd";
+import {App, ConfigProvider, Layout, theme} from "antd";
 import {BrowserRouter} from "react-router-dom";
 import AppBase from "./AppBase";
 import axios from "axios";
 
 const {darkAlgorithm, defaultAlgorithm} = theme;
+const {Content} = Layout;
 
 export interface PluginCoreInfoResponse {
     dark: boolean
@@ -77,9 +78,11 @@ const IndexContent = ({pluginInfo, isDark}: { pluginInfo: PluginCoreInfoResponse
     return (
         <BrowserRouter>
             <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
-                <App>
-                    <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
-                </App>
+                <Content>
+                    <App>
+                        <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
+                    </App>
+                </Content>
             </StyleProvider>
         </BrowserRouter>
     );
