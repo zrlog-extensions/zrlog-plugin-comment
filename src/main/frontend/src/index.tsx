@@ -78,7 +78,7 @@ const IndexContent = ({pluginInfo, isDark}: { pluginInfo: PluginCoreInfoResponse
     return (
         <BrowserRouter>
             <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
-                <Content>
+                <Content style={{minHeight: "100vh", backgroundColor: isDark ? "#141414" : undefined, color: isDark ? "#dfdfdf" : undefined}}>
                     <App>
                         <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
                     </App>
