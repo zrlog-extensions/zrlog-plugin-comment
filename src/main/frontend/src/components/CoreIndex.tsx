@@ -314,7 +314,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                         {data.plugin.name} 管理中心
                     </MainTitle>
                     <Subtitle $token={token}>
-                        版本号: v{data.plugin.version} | 当前模式: <Tag color={type === "base" ? "processing" : "warning"}>{type === "base" ? "默认评论框" : "畅言评论框"}</Tag>
+                        当前模式: <Tag color={type === "base" ? "processing" : "warning"}>{type === "base" ? "默认评论框" : "畅言评论框"}</Tag>
                     </Subtitle>
                 </HeaderLeft>
                 
