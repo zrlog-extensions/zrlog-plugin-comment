@@ -25,6 +25,29 @@ public class CommentService {
 
     }
 
+    public static boolean isCommentEmailNotifyEnabled(IOSession session) {
+        try {
+            Map<String, Object> keyMap = new HashMap<>();
+            keyMap.put("key", "commentEmailNotify");
+            Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
+            if (map == null) {
+                return false;
+            }
+            return isEnabled(map.get("commentEmailNotify"));
+        } catch (Exception e) {
+            LOGGER.log(java.util.logging.Level.WARNING, "Failed to load comment email notification setting", e);
+            return false;
+        }
+    }
+
+    private static boolean isEnabled(Object value) {
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        String normalized = value == null ? "" : value.toString().trim().toLowerCase();
+        return "true".equals(normalized) || "on".equals(normalized) || "1".equals(normalized);
+    }
+
     public static synchronized void recordSyncHistory(IOSession session, boolean success, int count, String msg) {
         try {
             Map<String, Object> keyMap = new HashMap<>();

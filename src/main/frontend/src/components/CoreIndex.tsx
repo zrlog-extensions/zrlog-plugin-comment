@@ -30,6 +30,8 @@ type CoreIndexProps = {
     data: PluginCoreInfoResponse;
 }
 
+const enabled = (value?: boolean | string) => value === true || value === "true" || value === "on" || value === "1";
+
 const Shell = styled.div<{ $token: any }>`
   width: 100%;
   max-width: 900px;
@@ -176,7 +178,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
     });
 
     const [type, setType] = React.useState<string>(data.setting.type || "base");
-    const [commentEmailNotify, setCommentEmailNotify] = React.useState<boolean>(data.setting.commentEmailNotify || false);
+    const [commentEmailNotify, setCommentEmailNotify] = React.useState<boolean>(enabled(data.setting.commentEmailNotify));
     const [history, setHistory] = React.useState<any[]>(() => {
         try {
             return data.setting.syncHistory ? (typeof data.setting.syncHistory === "string" ? JSON.parse(data.setting.syncHistory) : data.setting.syncHistory) : [];
@@ -201,7 +203,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 setChangyan(JSON.parse(res.setting.changyan));
                 setBase(JSON.parse(res.setting.base));
                 setType(res.setting.type || "base");
-                setCommentEmailNotify(res.setting.commentEmailNotify || false);
+                setCommentEmailNotify(enabled(res.setting.commentEmailNotify));
                 
                 let historyList = [];
                 if (res.setting.syncHistory) {

@@ -35,7 +35,7 @@ export interface PluginSetting {
     changyan: string;
     base: string;
     type: "changyan" | "base";
-    commentEmailNotify: boolean;
+    commentEmailNotify?: boolean | string;
     syncHistory?: string;
 }
 

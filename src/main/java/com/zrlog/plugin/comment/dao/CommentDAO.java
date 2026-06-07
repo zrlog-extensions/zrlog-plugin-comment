@@ -3,6 +3,7 @@ package com.zrlog.plugin.comment.dao;
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.client.HttpClientUtils;
+import com.zrlog.plugin.comment.service.CommentService;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
@@ -16,7 +17,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,22 +35,30 @@ public class CommentDAO {
     }
 
     private static void tryNotify(IOSession session, Comment comment) {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "commentEmailNotify");
-        if (!Objects.equals(keyMap.get("commentEmailNotify"), "true")) {
+        if (!CommentService.isCommentEmailNotifyEnabled(session)) {
             return;
         }
-        PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, new HashMap<>(), ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
-        Map<String, String> map = new HashMap<>();
-        Map<String, Object> moduleMap = new HashMap<>();
-        moduleMap.put("content", comment.getContent());
-        moduleMap.put("title", "-");
-        moduleMap.put("titleUrl", "-");
-        moduleMap.put("username", comment.getName());
-        moduleMap.put("version", session.getPlugin().getVersion());
-        map.put("content", new SimpleTemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
-        map.put("title", publicInfo.getTitle() + " 有了新的评论");
-        session.requestService("emailService", map);
+        try {
+            PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, new HashMap<>(), ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
+            Map<String, String> map = new HashMap<>();
+            Map<String, Object> moduleMap = new HashMap<>();
+            moduleMap.put("content", comment.getContent());
+            moduleMap.put("title", "-");
+            moduleMap.put("titleUrl", "-");
+            moduleMap.put("username", comment.getName());
+            moduleMap.put("version", session.getPlugin().getVersion());
+            map.put("content", new SimpleTemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
+            String siteTitle = publicInfo == null || publicInfo.getTitle() == null ? "" : publicInfo.getTitle();
+            map.put("title", siteTitle + " 有了新的评论");
+            session.requestService("emailService", map, msgPacket -> {
+                boolean success = msgPacket != null && msgPacket.getStatus() == MsgPacketStatus.RESPONSE_SUCCESS;
+                CommentService.recordSyncHistory(session, success, success ? 1 : 0,
+                        success ? "新评论邮件通知已提交" : "新评论邮件通知失败");
+            });
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Failed to request comment notification", e);
+            CommentService.recordSyncHistory(session, false, 0, "新评论邮件通知失败: " + e.getMessage());
+        }
     }
 
     public static List<Map<String, Object>> loadComments(IOSession session, Long articleId) {
