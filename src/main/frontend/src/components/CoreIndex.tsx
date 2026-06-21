@@ -370,7 +370,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                         <InfoBox $token={token}>
                             <InfoCircleOutlined style={{ marginTop: 2, color: colorPrimary }} />
                             <div>
-                                配置项保存后将自动记录到数据库持久化日志中。如果使用畅言模式，请确保填写正确的 appId 和 appKey 以保障数据抓取反向同步。
+                                配置项保存后会写入数据库持久化日志；使用畅言模式时，请确认 appId 和 appKey 正确，以便抓取反向同步
                             </div>
                         </InfoBox>
 
