@@ -1,9 +1,14 @@
 package com.zrlog.plugin.comment.service;
 
 import com.zrlog.plugin.IOSession;
+import com.zrlog.plugin.comment.config.CommentHistoryConfig;
+import com.zrlog.plugin.comment.config.CommentHistoryRecord;
+import com.zrlog.plugin.comment.config.CommentWebsiteConfig;
+import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.dao.CommentDAO;
 import com.zrlog.plugin.render.SimpleTemplateRender;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -27,62 +32,59 @@ public class CommentService {
 
     public static boolean isCommentEmailNotifyEnabled(IOSession session) {
         try {
-            Map<String, Object> keyMap = new HashMap<>();
-            keyMap.put("key", "commentEmailNotify");
-            Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
-            if (map == null) {
+            CommentWebsiteConfig config = session.getResponseSync(ContentType.JSON, WebsiteKeyRequest.of("commentEmailNotify"),
+                    ActionType.GET_WEBSITE, CommentWebsiteConfig.class);
+            if (config == null) {
                 return false;
             }
-            return isEnabled(map.get("commentEmailNotify"));
+            return isEnabled(config.getCommentEmailNotify());
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.WARNING, "Failed to load comment email notification setting", e);
             return false;
         }
     }
 
-    private static boolean isEnabled(Object value) {
-        if (value instanceof Boolean) {
-            return (Boolean) value;
-        }
+    private static boolean isEnabled(String value) {
         String normalized = value == null ? "" : value.toString().trim().toLowerCase();
         return "true".equals(normalized) || "on".equals(normalized) || "1".equals(normalized);
     }
 
     public static synchronized void recordSyncHistory(IOSession session, boolean success, int count, String msg) {
         try {
-            Map<String, Object> keyMap = new HashMap<>();
-            keyMap.put("key", "syncHistory");
-            Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
-            String historyJson = map != null ? (String) map.get("syncHistory") : null;
+            Gson gson = new Gson();
+            CommentHistoryConfig historyConfig = session.getResponseSync(ContentType.JSON, WebsiteKeyRequest.of("syncHistory"),
+                    ActionType.GET_WEBSITE, CommentHistoryConfig.class);
+            String historyJson = historyConfig != null ? historyConfig.getSyncHistory() : null;
+            List<CommentHistoryRecord> historyList = historyList(gson, historyJson);
 
-            List<Map<String, Object>> historyList;
-            if (historyJson == null || historyJson.trim().isEmpty()) {
-                historyList = new ArrayList<>();
-            } else {
-                historyList = new Gson().fromJson(historyJson, List.class);
-            }
-
-            Map<String, Object> newLog = new HashMap<>();
-            newLog.put("time", new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-            newLog.put("success", success);
-            newLog.put("count", count);
-            newLog.put("message", msg);
-
+            CommentHistoryRecord newLog = CommentHistoryRecord.create(new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()),
+                    success, count, msg);
             historyList.add(newLog);
 
             while (historyList.size() > 15) {
                 historyList.remove(0);
             }
 
-            Map<String, Object> params = new HashMap<>();
-            params.put("syncHistory", new Gson().toJson(historyList));
-            session.sendMsg(new MsgPacket(params, ContentType.JSON, MsgPacketStatus.SEND_REQUEST, IdUtil.getInt(),
+            CommentHistoryConfig saveConfig = new CommentHistoryConfig();
+            saveConfig.setSyncHistory(gson.toJson(historyList));
+            session.sendMsg(new MsgPacket(saveConfig, ContentType.JSON, MsgPacketStatus.SEND_REQUEST, IdUtil.getInt(),
                     ActionType.SET_WEBSITE.name()), msgPacket -> {
                 // Done
             });
         } catch (Exception e) {
             LOGGER.log(java.util.logging.Level.SEVERE, "Failed to record sync history", e);
         }
+    }
+
+    private static List<CommentHistoryRecord> historyList(Gson gson, String historyJson) {
+        if (historyJson == null || historyJson.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        CommentHistoryRecord[] records = gson.fromJson(historyJson, CommentHistoryRecord[].class);
+        if (records == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(records));
     }
 
     public String renderBaseListCommentHtml(IOSession session, Long articleId) {

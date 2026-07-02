@@ -2,6 +2,15 @@ package com.zrlog.plugin.comment.controller;
 
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
+import com.zrlog.plugin.comment.config.ChangyanConfig;
+import com.zrlog.plugin.comment.config.CommentApiResponse;
+import com.zrlog.plugin.comment.config.CommentBaseConfig;
+import com.zrlog.plugin.comment.config.CommentHistoryConfig;
+import com.zrlog.plugin.comment.config.CommentHistoryRecord;
+import com.zrlog.plugin.comment.config.CommentSubmitRequest;
+import com.zrlog.plugin.comment.config.CommentUpdateRequest;
+import com.zrlog.plugin.comment.config.CommentWebsiteConfig;
+import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.dao.CommentDAO;
 import com.zrlog.plugin.comment.service.CommentService;
 import com.zrlog.plugin.common.IdUtil;
@@ -24,6 +33,7 @@ public class CommentController {
     private final IOSession session;
     private final MsgPacket requestPacket;
     private final HttpRequestInfo requestInfo;
+    private final Gson gson = new Gson();
 
     public CommentController(IOSession session, MsgPacket requestPacket, HttpRequestInfo requestInfo) {
         this.session = session;
@@ -32,12 +42,10 @@ public class CommentController {
     }
 
     public void update() {
-        session.sendMsg(new MsgPacket(requestInfo.simpleParam(), ContentType.JSON, MsgPacketStatus.SEND_REQUEST, IdUtil.getInt(),
+        session.sendMsg(new MsgPacket(updateRequest(), ContentType.JSON, MsgPacketStatus.SEND_REQUEST, IdUtil.getInt(),
                 ActionType.SET_WEBSITE.name()), msgPacket -> {
             CommentService.recordSyncHistory(session, true, 0, "更新插件配置参数成功");
-            Map<String, Object> map = new HashMap<>();
-            map.put("success", true);
-            session.sendMsg(new MsgPacket(map, ContentType.JSON, MsgPacketStatus.RESPONSE_SUCCESS, requestPacket.getMsgId(), requestPacket.getMethodStr()));
+            response(CommentApiResponse.success());
         });
     }
 
@@ -46,30 +54,21 @@ public class CommentController {
     }
 
     public void history() {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "syncHistory");
-        Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
-        String historyJson = map != null ? (String) map.get("syncHistory") : null;
-        List historyList;
-        if (historyJson == null || historyJson.trim().isEmpty()) {
-            historyList = new ArrayList<>();
-        } else {
-            historyList = new Gson().fromJson(historyJson, List.class);
-        }
-        session.sendJsonMsg(historyList, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
+        CommentHistoryConfig historyConfig = session.getResponseSync(ContentType.JSON, WebsiteKeyRequest.of("syncHistory"),
+                ActionType.GET_WEBSITE, CommentHistoryConfig.class);
+        session.sendJsonMsg(historyList(historyConfig), requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
     }
 
     private void doComment() {
-        Map map = requestInfo.simpleParam();
-        Object lodId = map.get("logId");
-        if (Objects.isNull(lodId)) {
+        CommentSubmitRequest submitRequest = submitRequest();
+        if (Objects.isNull(submitRequest.getLogId()) || submitRequest.getLogId().trim().isEmpty()) {
             throw new RuntimeException("文章id 不能为空");
         }
-        String content = (String) map.get("userComment");
+        String content = submitRequest.getUserComment();
         if (Objects.isNull(content) || content.trim().isEmpty()) {
             throw new RuntimeException("内容不能为空");
         }
-        String userName = (String) map.get("userName");
+        String userName = submitRequest.getUserName();
         if (Objects.isNull(userName) || userName.trim().isEmpty()) {
             throw new RuntimeException("昵称不能为空");
         }
@@ -77,9 +76,9 @@ public class CommentController {
         Comment comment = new Comment();
         comment.setContent(content);
         comment.setName(userName);
-        comment.setLogId(Long.parseLong((String) lodId));
-        comment.setHome((String) map.get("web"));
-        comment.setMail((String) map.get("email"));
+        comment.setLogId(Long.parseLong(submitRequest.getLogId()));
+        comment.setHome(submitRequest.getWeb());
+        comment.setMail(submitRequest.getEmail());
         comment.setHeadPortrait("");
         comment.setIp(requestInfo.getHeader().get("X-Real-IP"));
         comment.setCreatedTime(new Date());
@@ -99,29 +98,16 @@ public class CommentController {
     }
 
     private Map<String, Object> data() {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "changyan,base,commentEmailNotify,type,syncHistory");
-        Map map = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
-        map.put("userName", requestInfo.getUserName());
-        map.put("userId", requestInfo.getUserId());
-        map.put("fullUrl", requestInfo.getFullUrl().replace("install", ""));
-        if (map.get("changyan") == null || "".equals(map.get("changyan"))) {
-            Map<String, Object> defaultChangyan = new HashMap<>();
-            defaultChangyan.put("callbackUrl", requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/changyan/sync/" + UUID.randomUUID().toString().replace("-", ""));
-            map.put("changyan", new Gson().toJson(defaultChangyan));
-        }
-        if (map.get("base") == null || "".equals(map.get("base"))) {
-            Map<String, Object> defaultBase = new HashMap<>();
-            defaultBase.put("styleStr", "");
-            map.put("base", new Gson().toJson(defaultBase));
-        }
-        if (Objects.isNull(map.get("type"))) {
-            map.put("type", "base");
-        }
+        CommentWebsiteConfig config = websiteConfig("changyan,base,commentEmailNotify,type,syncHistory");
+        config.setUserName(requestInfo.getUserName());
+        config.setUserId(requestInfo.getUserId());
+        config.setFullUrl(requestInfo.getFullUrl().replace("install", ""));
+        config.normalize(requestInfo.getAccessUrl() + "/p/" + session.getPlugin().getShortName() + "/changyan/sync/"
+                + UUID.randomUUID().toString().replace("-", ""));
         Map<String, Object> data = new HashMap<>();
         data.put("theme", requestInfo.isDarkMode() ? "dark" : "light");
         data.put("dark", requestInfo.isDarkMode());
-        data.put("setting", map);
+        data.put("setting", config);
         data.put("primaryColor", requestInfo.getAdminColorPrimary());
         data.put("colorPrimary", requestInfo.getAdminColorPrimary());
         data.put("plugin", session.getPlugin());
@@ -130,31 +116,29 @@ public class CommentController {
 
     public void index() {
         Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("data", new Gson().toJson(data()));
+        keyMap.put("data", gson.toJson(data()));
         session.responseHtmlStr(new SimpleTemplateRender().render("/templates/index", session.getPlugin(), keyMap), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
 
     public void widget() {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "base,changyan,type");
-        Map configMap = session.getResponseSync(ContentType.JSON, keyMap, ActionType.GET_WEBSITE, Map.class);
-        String articleId = (String) requestInfo.simpleParam().get("articleId");
+        CommentWebsiteConfig config = websiteConfig("base,changyan,type");
+        String articleId = paramValue("articleId");
         if (Objects.isNull(articleId)) {
             articleId = "-1";
         }
         Map<String, Object> data = new HashMap<>();
         data.put("articleId", articleId);
-        String type = (String) configMap.get("type");
+        String type = config.normalizedType();
         if (Objects.isNull(type) || type.trim().isEmpty()) {
             type = "base";
             data.put("type", "base");
         }
         if (Objects.equals(type, "base")) {
-            fillBaseCommentInfo(configMap, data);
+            fillBaseCommentInfo(config, data);
             data.put("comments", new CommentService().renderBaseListCommentHtml(session, Long.parseLong(articleId)));
         } else if (Objects.equals(type, "changyan")) {
-            Map map = Objects.nonNull(configMap.get("changyan")) ? new Gson().fromJson((String) configMap.get("changyan"), Map.class) : new HashMap<>();
-            String appId = (String) map.get("appId");
+            ChangyanConfig changyanConfig = changyanConfig(config.getChangyan());
+            String appId = changyanConfig.getAppId();
             if (Objects.nonNull(appId)) {
                 data.put("appId", appId);
             } else {
@@ -164,12 +148,11 @@ public class CommentController {
         session.responseHtmlStr(new SimpleTemplateRender().render("/widget/" + type + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
     }
 
-    private static void fillBaseCommentInfo(Map configMap, Map<String, Object> data) {
-        Map map = Objects.nonNull(configMap.get("base")) ? new Gson().fromJson((String) configMap.get("base"), Map.class) : new HashMap<>();
-        data.putAll(map);
-        data.putIfAbsent("styleStr", "");
-        data.putIfAbsent("mainColor", "#1677ff");
-        String baseUrl = (String) map.get("baseUrl");
+    private void fillBaseCommentInfo(CommentWebsiteConfig config, Map<String, Object> data) {
+        CommentBaseConfig baseConfig = baseConfig(config.getBase());
+        data.put("styleStr", blankToDefault(baseConfig.getStyleStr(), ""));
+        data.put("mainColor", blankToDefault(baseConfig.getMainColor(), "#1677ff"));
+        String baseUrl = baseConfig.getBaseUrl();
         if (Objects.isNull(baseUrl) || Objects.equals(baseUrl, "")) {
             data.put("commentUrl", "/p/comment/addComment");
         } else {
@@ -177,4 +160,72 @@ public class CommentController {
         }
     }
 
+    private List<CommentHistoryRecord> historyList(CommentHistoryConfig historyConfig) {
+        String historyJson = historyConfig == null ? null : historyConfig.getSyncHistory();
+        if (historyJson == null || historyJson.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        CommentHistoryRecord[] records = gson.fromJson(historyJson, CommentHistoryRecord[].class);
+        if (records == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(records));
+    }
+
+    private CommentWebsiteConfig websiteConfig(String keys) {
+        CommentWebsiteConfig config = session.getResponseSync(ContentType.JSON, WebsiteKeyRequest.of(keys), ActionType.GET_WEBSITE,
+                CommentWebsiteConfig.class);
+        return config == null ? new CommentWebsiteConfig() : config;
+    }
+
+    private CommentUpdateRequest updateRequest() {
+        CommentUpdateRequest request = new CommentUpdateRequest();
+        request.setType(paramValue("type"));
+        request.setCommentEmailNotify(paramValue("commentEmailNotify"));
+        request.setChangyan(paramValue("changyan"));
+        request.setBase(paramValue("base"));
+        return request;
+    }
+
+    private CommentSubmitRequest submitRequest() {
+        CommentSubmitRequest request = new CommentSubmitRequest();
+        request.setLogId(paramValue("logId"));
+        request.setUserComment(paramValue("userComment"));
+        request.setUserName(paramValue("userName"));
+        request.setWeb(paramValue("web"));
+        request.setEmail(paramValue("email"));
+        return request;
+    }
+
+    private String paramValue(String key) {
+        if (requestInfo.getParam() == null || requestInfo.getParam().get(key) == null || requestInfo.getParam().get(key).length == 0) {
+            return null;
+        }
+        return requestInfo.getParam().get(key)[0];
+    }
+
+    private CommentBaseConfig baseConfig(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return new CommentBaseConfig();
+        }
+        CommentBaseConfig config = gson.fromJson(value, CommentBaseConfig.class);
+        return config == null ? new CommentBaseConfig() : config;
+    }
+
+    private ChangyanConfig changyanConfig(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return new ChangyanConfig();
+        }
+        ChangyanConfig config = gson.fromJson(value, ChangyanConfig.class);
+        return config == null ? new ChangyanConfig() : config;
+    }
+
+    private String blankToDefault(String value, String defaultValue) {
+        return value == null || value.trim().isEmpty() ? defaultValue : value;
+    }
+
+    private void response(Object data) {
+        session.sendMsg(new MsgPacket(data, ContentType.JSON, MsgPacketStatus.RESPONSE_SUCCESS, requestPacket.getMsgId(),
+                requestPacket.getMethodStr()));
+    }
 }

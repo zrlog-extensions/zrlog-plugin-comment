@@ -3,6 +3,9 @@ package com.zrlog.plugin.comment.controller;
 import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.client.ClientActionHandler;
+import com.zrlog.plugin.comment.config.ChangyanConfig;
+import com.zrlog.plugin.comment.config.CommentWebsiteConfig;
+import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.dao.CommentDAO;
 import com.zrlog.plugin.comment.response.ChangyanComment;
 import com.zrlog.plugin.comment.response.CommentsEntry;
@@ -17,8 +20,6 @@ import com.zrlog.plugin.type.ActionType;
 
 import java.net.URL;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +33,7 @@ public class ChangyanController {
     private final IOSession session;
     private final MsgPacket requestPacket;
     private final HttpRequestInfo requestInfo;
+    private final Gson gson = new Gson();
 
     public ChangyanController(IOSession session, MsgPacket requestPacket, HttpRequestInfo requestInfo) {
         this.session = session;
@@ -43,18 +45,16 @@ public class ChangyanController {
      * 反向同步接口
      */
     public void sync() {
-        Map<String, Object> keyMap = new HashMap<>();
-        keyMap.put("key", "changyan");
-        session.sendJsonMsg(keyMap, ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
-            Map<String, Object> data = new Gson().fromJson(msgPacket.getDataStr(), Map.class);
-            Map<String, Object> changyan = new Gson().fromJson((String) data.get("changyan"), Map.class);
-            String callbackUrl = (String) changyan.get("callbackUrl");
+        session.sendJsonMsg(WebsiteKeyRequest.of("changyan"), ActionType.GET_WEBSITE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, msgPacket -> {
+            CommentWebsiteConfig websiteConfig = gson.fromJson(msgPacket.getDataStr(), CommentWebsiteConfig.class);
+            ChangyanConfig changyan = changyanConfig(websiteConfig);
+            String callbackUrl = changyan.getCallbackUrl();
             String ignoreChar = "/p/" + session.getPlugin().getShortName();
             try {
                 if (callbackUrl != null && new URL(callbackUrl).getPath().replace(ignoreChar, "").equals(requestInfo.getUri().replace(".action", ""))) {
                     String commentJsonStr = requestInfo.getParam().get("data")[0];
                     LOGGER.info(commentJsonStr);
-                    final ChangyanComment changyanComment = new Gson().fromJson(commentJsonStr, ChangyanComment.class);
+                    final ChangyanComment changyanComment = gson.fromJson(commentJsonStr, ChangyanComment.class);
                     dealSyncRequest(changyanComment);
                 } else {
                     session.sendMsg(ContentType.HTML, ClientActionHandler.ACTION_NOT_FOUND_PAGE, requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
@@ -64,6 +64,14 @@ public class ChangyanController {
                 session.sendMsg(ContentType.HTML, "Exception", requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
             }
         });
+    }
+
+    private ChangyanConfig changyanConfig(CommentWebsiteConfig websiteConfig) {
+        if (websiteConfig == null || websiteConfig.getChangyan() == null || websiteConfig.getChangyan().trim().isEmpty()) {
+            return new ChangyanConfig();
+        }
+        ChangyanConfig changyanConfig = gson.fromJson(websiteConfig.getChangyan(), ChangyanConfig.class);
+        return changyanConfig == null ? new ChangyanConfig() : changyanConfig;
     }
 
     private void dealSyncRequest(final ChangyanComment changyanComment) {
