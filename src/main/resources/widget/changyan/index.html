@@ -52,7 +52,7 @@
 </style>
 <script type="text/javascript">
     (function () {
-        var appid = '${appId}';
+        var appid = ${appIdJson};
         var conf = 'prod_e3ec9450cef3977322648b62a820e338';
         var width = window.innerWidth || document.documentElement.clientWidth;
         if (width < 1000) {
@@ -61,7 +61,7 @@
             script.type = 'text/javascript';
             script.charset = 'utf-8';
             script.id = 'changyan_mobile_js';
-            script.src = `https://cy-cdn.kuaizhan.com/upload/mobile/wap-js/changyan_mobile.js?client_id=${appId}&conf=` + conf;
+            script.src = `https://cy-cdn.kuaizhan.com/upload/mobile/wap-js/changyan_mobile.js?client_id=${encodeURIComponent(appid)}&conf=` + conf;
             head.appendChild(script);
         } else {
             var loadJs = function (d, a) {

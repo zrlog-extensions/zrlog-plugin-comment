@@ -1,10 +1,10 @@
 <div class="comment-item" style="border-bottom: 1px solid var(--comment-border-color, #ccc);padding-bottom: 16px;">
     <div>
-        <img src="https://cn.cravatar.com/avatar/${gravatarId}?s=120" class="avatar" alt="${userName}"/>
+        <img src="https://cn.cravatar.com/avatar/${gravatarId}?s=120" class="avatar" alt="${userNameAttribute}"/>
     </div>
     <div>
         <div>
-            <a href="${userHome}" rel="nofollow" class="commentUserName">${userName}</a>
+            ${userIdentityHtml}
             <span style="padding-left: 24px;" class="commentTime"> ${commTime}</span>
         </div>
         <div class="comment-content">${userComment}</div>

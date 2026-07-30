@@ -12,6 +12,8 @@ import com.zrlog.plugin.comment.config.CommentUpdateRequest;
 import com.zrlog.plugin.comment.config.CommentWebsiteConfig;
 import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.controller.CommentController;
+import com.zrlog.plugin.comment.model.CommentListResponse;
+import com.zrlog.plugin.comment.model.CommentRenderModel;
 import com.zrlog.plugin.comment.response.ChangyanComment;
 import com.zrlog.plugin.comment.response.CommentsEntry;
 import com.zrlog.plugin.comment.response.User;
@@ -31,7 +33,7 @@ public class GraalvmAgentApplication {
         PluginNativeImageUtils.gsonNativeAgentByClazz(Arrays.asList(ChangyanComment.class, CommentsEntry.class, User.class,
                 ChangyanConfig.class, CommentApiResponse.class, CommentBaseConfig.class, CommentHistoryConfig.class,
                 CommentHistoryRecord.class, CommentSubmitRequest.class, CommentUpdateRequest.class, CommentWebsiteConfig.class,
-                WebsiteKeyRequest.class));
+                WebsiteKeyRequest.class, CommentListResponse.class, CommentRenderModel.class));
         String basePath = System.getProperty("user.dir").replace("\\target", "").replace("/target", "");
         //PathKit.setRootPath(basePath);
         File file = new File(basePath + "/src/main/resources");

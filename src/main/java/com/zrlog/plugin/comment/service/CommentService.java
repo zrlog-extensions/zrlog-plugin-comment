@@ -1,30 +1,29 @@
 package com.zrlog.plugin.comment.service;
 
+import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.comment.config.CommentHistoryConfig;
 import com.zrlog.plugin.comment.config.CommentHistoryRecord;
 import com.zrlog.plugin.comment.config.CommentWebsiteConfig;
 import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.dao.CommentDAO;
-import com.zrlog.plugin.render.SimpleTemplateRender;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import com.google.gson.Gson;
+import com.zrlog.plugin.comment.model.CommentRenderModel;
+import com.zrlog.plugin.comment.render.CommentHtmlRenderer;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.data.codec.ContentType;
 import com.zrlog.plugin.data.codec.MsgPacket;
 import com.zrlog.plugin.data.codec.MsgPacketStatus;
 import com.zrlog.plugin.type.ActionType;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+
 public class CommentService {
 
     private static final java.util.logging.Logger LOGGER = com.zrlog.plugin.common.LoggerUtil.getLogger(CommentService.class);
+    private static final CommentHtmlRenderer COMMENT_HTML_RENDERER = new CommentHtmlRenderer();
 
     public CommentService() {
 
@@ -89,15 +88,10 @@ public class CommentService {
 
     public String renderBaseListCommentHtml(IOSession session, Long articleId) {
         try {
-            List<Map<String, Object>> maps = CommentDAO.loadComments(session, articleId);
-            StringBuilder sb = new StringBuilder();
-            sb.append("<span class='totalComment'>").append(maps.size()).append(" 条评论</span>");
-            for (Map<String, Object> map : maps) {
-                sb.append(new SimpleTemplateRender().render("/widget/base/comment", session.getPlugin(), map));
-            }
-            return sb.toString();
+            List<CommentRenderModel> comments = CommentDAO.loadComments(session, articleId);
+            return COMMENT_HTML_RENDERER.renderCommentList(comments, session.getPlugin());
         } catch (Exception e) {
-            return e.getMessage();
+            return CommentHtmlRenderer.escapeHtmlText(e.getMessage());
         }
     }
 }

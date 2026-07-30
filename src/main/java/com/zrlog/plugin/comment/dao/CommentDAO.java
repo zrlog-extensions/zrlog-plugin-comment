@@ -4,13 +4,15 @@ import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.client.HttpClientUtils;
 import com.zrlog.plugin.comment.service.CommentService;
+import com.zrlog.plugin.comment.model.CommentListResponse;
+import com.zrlog.plugin.comment.model.CommentRenderModel;
+import com.zrlog.plugin.comment.render.CommentHtmlRenderer;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
 import com.zrlog.plugin.common.model.PublicInfo;
 import com.zrlog.plugin.data.codec.ContentType;
 import com.zrlog.plugin.data.codec.MsgPacketStatus;
-import com.zrlog.plugin.render.SimpleTemplateRender;
 import com.zrlog.plugin.type.ActionType;
 
 import java.time.Duration;
@@ -23,6 +25,7 @@ import java.util.logging.Logger;
 public class CommentDAO {
 
     private static final Logger LOGGER = LoggerUtil.getLogger(CommentDAO.class);
+    private static final CommentHtmlRenderer COMMENT_HTML_RENDERER = new CommentHtmlRenderer();
 
     public static void save(IOSession session, Comment comment) {
         LOGGER.log(Level.INFO, "new comment " + new Gson().toJson(comment));
@@ -41,13 +44,8 @@ public class CommentDAO {
         try {
             PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, new HashMap<>(), ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
             Map<String, String> map = new HashMap<>();
-            Map<String, Object> moduleMap = new HashMap<>();
-            moduleMap.put("content", comment.getContent());
-            moduleMap.put("title", "-");
-            moduleMap.put("titleUrl", "-");
-            moduleMap.put("username", comment.getName());
-            moduleMap.put("version", session.getPlugin().getVersion());
-            map.put("content", new SimpleTemplateRender().render("/email/notify-email.html", session.getPlugin(), moduleMap));
+            map.put("content", COMMENT_HTML_RENDERER.renderNotification(
+                    comment, session.getPlugin().getVersion(), session.getPlugin()));
             String siteTitle = publicInfo == null || publicInfo.getTitle() == null ? "" : publicInfo.getTitle();
             map.put("title", siteTitle + " 有了新的评论");
             session.requestService("emailService", map, msgPacket -> {
@@ -61,9 +59,11 @@ public class CommentDAO {
         }
     }
 
-    public static List<Map<String, Object>> loadComments(IOSession session, Long articleId) {
+    public static List<CommentRenderModel> loadComments(IOSession session, Long articleId) {
         PublicInfo publicInfo = session.getResponseSync(ContentType.JSON, new HashMap<>(), ActionType.LOAD_PUBLIC_INFO, PublicInfo.class);
-        Map map = HttpClientUtils.sendGetRequest(publicInfo.getApiHomeUrl() + "/api/article/comment?id=" + articleId, Map.class, new HashMap<>(), session, Duration.ofSeconds(30));
-        return (List<Map<String, Object>>) map.get("data");
+        CommentListResponse response = HttpClientUtils.sendGetRequest(
+                publicInfo.getApiHomeUrl() + "/api/article/comment?id=" + articleId,
+                CommentListResponse.class, new HashMap<>(), session, Duration.ofSeconds(30));
+        return response == null ? java.util.Collections.emptyList() : response.getData();
     }
 }

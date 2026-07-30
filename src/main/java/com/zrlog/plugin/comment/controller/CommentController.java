@@ -12,6 +12,7 @@ import com.zrlog.plugin.comment.config.CommentUpdateRequest;
 import com.zrlog.plugin.comment.config.CommentWebsiteConfig;
 import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.dao.CommentDAO;
+import com.zrlog.plugin.comment.render.CommentHtmlRenderer;
 import com.zrlog.plugin.comment.service.CommentService;
 import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
@@ -29,6 +30,7 @@ import java.util.logging.Logger;
 public class CommentController {
 
     private static final Logger LOGGER = LoggerUtil.getLogger(CommentController.class);
+    private static final CommentHtmlRenderer COMMENT_HTML_RENDERER = new CommentHtmlRenderer();
 
     private final IOSession session;
     private final MsgPacket requestPacket;
@@ -73,11 +75,15 @@ public class CommentController {
             throw new RuntimeException("昵称不能为空");
         }
 
+        String userHome = CommentHtmlRenderer.normalizeHttpUrl(submitRequest.getWeb());
+        if (userHome == null) {
+            throw new RuntimeException("网站地址仅支持 http:// 或 https://");
+        }
         Comment comment = new Comment();
         comment.setContent(content);
         comment.setName(userName);
         comment.setLogId(Long.parseLong(submitRequest.getLogId()));
-        comment.setHome(submitRequest.getWeb());
+        comment.setHome(userHome);
         comment.setMail(submitRequest.getEmail());
         comment.setHeadPortrait("");
         comment.setIp(requestInfo.getHeader().get("X-Real-IP"));
@@ -86,14 +92,15 @@ public class CommentController {
     }
 
     public void addComment() {
-        Map<String, Object> map = new HashMap<>();
+        String resultMessage = "";
         try {
             doComment();
-            map.put("resultMsg", "评论成功");
+            resultMessage = "评论成功";
         } catch (Exception e) {
-            map.put("resultMsg", e.getMessage());
+            resultMessage = e.getMessage();
         } finally {
-            session.responseHtmlStr(new SimpleTemplateRender().render("/result/comment", session.getPlugin(), map), requestPacket.getMethodStr(), requestPacket.getMsgId());
+            session.responseHtmlStr(COMMENT_HTML_RENDERER.renderResult(resultMessage, session.getPlugin()),
+                    requestPacket.getMethodStr(), requestPacket.getMsgId());
         }
     }
 
@@ -122,12 +129,9 @@ public class CommentController {
 
     public void widget() {
         CommentWebsiteConfig config = websiteConfig("base,changyan,type");
-        String articleId = paramValue("articleId");
-        if (Objects.isNull(articleId)) {
-            articleId = "-1";
-        }
+        long articleId = parseArticleId(paramValue("articleId"));
         Map<String, Object> data = new HashMap<>();
-        data.put("articleId", articleId);
+        data.put("articleId", String.valueOf(articleId));
         String type = config.normalizedType();
         if (Objects.isNull(type) || type.trim().isEmpty()) {
             type = "base";
@@ -135,17 +139,24 @@ public class CommentController {
         }
         if (Objects.equals(type, "base")) {
             fillBaseCommentInfo(config, data);
-            data.put("comments", new CommentService().renderBaseListCommentHtml(session, Long.parseLong(articleId)));
+            data.put("comments", new CommentService().renderBaseListCommentHtml(session, articleId));
         } else if (Objects.equals(type, "changyan")) {
             ChangyanConfig changyanConfig = changyanConfig(config.getChangyan());
             String appId = changyanConfig.getAppId();
-            if (Objects.nonNull(appId)) {
-                data.put("appId", appId);
-            } else {
-                data.put("appId", "");
-            }
+            data.put("appIdJson", CommentHtmlRenderer.toJavaScriptString(appId));
         }
         session.responseHtmlStr(new SimpleTemplateRender().render("/widget/" + type + "/index", session.getPlugin(), data), requestPacket.getMethodStr(), requestPacket.getMsgId());
+    }
+
+    private long parseArticleId(String articleId) {
+        if (articleId == null) {
+            return -1L;
+        }
+        try {
+            return Long.parseLong(articleId);
+        } catch (NumberFormatException e) {
+            return -1L;
+        }
     }
 
     private void fillBaseCommentInfo(CommentWebsiteConfig config, Map<String, Object> data) {
