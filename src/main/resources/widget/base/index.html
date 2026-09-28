@@ -4,26 +4,29 @@
     </div>
     <form action="${commentUrl}" method="post" class="comment-form">
         <input type="hidden" name="logId" value="${articleId}">
-        <textarea id="userComment" name="userComment" required rows="6" placeholder="请输入评论..."></textarea>
+        <textarea id="userComment" name="userComment" required maxlength="5000" rows="6" placeholder="请输入评论..."></textarea>
 
         <div class="form-row">
             <label for="web">网站</label>
-            <input id="web" name="web" type="text" required placeholder="https://example.com">
+            <input id="web" name="web" type="url" maxlength="500" placeholder="https://example.com">
         </div>
 
         <div class="form-row">
             <label for="userName">昵称</label>
-            <input id="userName" name="userName" type="text" required placeholder="请输入昵称">
+            <input id="userName" name="userName" type="text" required maxlength="80" placeholder="请输入昵称">
         </div>
 
         <div style="display: flex;align-items: center">
             <div class="form-row">
                 <label for="email">邮箱</label>
-                <input id="email" name="email" type="email" required placeholder="name@example.com, 邮箱不会公开">
+                <input id="email" name="email" type="email" required maxlength="254" placeholder="name@example.com, 邮箱不会公开">
             </div>
         </div>
 
-        <button type="submit">提交</button>
+        <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden">
+            <label>请留空<input name="contactWebsite" tabindex="-1" autocomplete="off"></label>
+        </div>
+        <button type="submit">提交评论</button>
     </form>
 </div>
 <style>

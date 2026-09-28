@@ -1,4 +1,5 @@
 import React from "react";
+import ModerationPanel from "./ModerationPanel";
 import {
     Button,
     ColorPicker,
@@ -177,6 +178,10 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
         }
     });
 
+    const [adminToken, setAdminToken] = React.useState(data.adminToken);
+    const [moderation, setModeration] = React.useState<{ enabled: boolean; aiEnabled: boolean }>(() => {
+        try { return JSON.parse(data.setting.moderation || "{}"); } catch { return { enabled: false, aiEnabled: false }; }
+    });
     const [type, setType] = React.useState<string>(data.setting.type || "base");
     const [commentEmailNotify, setCommentEmailNotify] = React.useState<boolean>(enabled(data.setting.commentEmailNotify));
     const [history, setHistory] = React.useState<any[]>(() => {
@@ -200,6 +205,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
         try {
             const { data: res } = await axios.get("json");
             if (res.setting) {
+                setAdminToken(res.adminToken);
+                setModeration(JSON.parse(res.setting.moderation || "{}"));
                 setChangyan(JSON.parse(res.setting.changyan));
                 setBase(JSON.parse(res.setting.base));
                 setType(res.setting.type || "base");
@@ -235,6 +242,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
 
             const params = new URLSearchParams();
             params.set("type", values.type);
+            params.set("adminToken", adminToken);
+            params.set("moderation", JSON.stringify({ enabled: Boolean(values.moderationEnabled), aiEnabled: Boolean(values.aiEnabled) }));
             params.set("commentEmailNotify", (values.commentEmailNotify ? "true" : "false"));
             params.set("changyan", JSON.stringify(updatedChangyan));
             params.set("base", JSON.stringify(updatedBase));
@@ -245,7 +254,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 setSettingsVisible(false);
                 setTimeout(reloadData, 500);
             } else {
-                messageApi.error("保存失败");
+                messageApi.error(res.message || "保存失败");
             }
         } catch (e: any) {
             messageApi.error("保存请求失败: " + e.message);
@@ -259,6 +268,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
         form.setFieldsValue({
             type,
             commentEmailNotify,
+            moderationEnabled: moderation.enabled,
+            aiEnabled: moderation.aiEnabled,
             appId: changyan.appId,
             appKey: changyan.appKey,
             callbackUrl: changyan.callbackUrl,
@@ -339,6 +350,8 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 </Actions>
             </HeaderPanel>
 
+            <ModerationPanel adminToken={adminToken} enabled={Boolean(moderation.enabled)} aiEnabled={Boolean(moderation.aiEnabled)} type={type} />
+
             <LogCard $token={token} title="操作与反向同步日志">
                 <Table 
                     columns={columns} 
@@ -370,7 +383,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                         <InfoBox $token={token}>
                             <InfoCircleOutlined style={{ marginTop: 2, color: colorPrimary }} />
                             <div>
-                                配置项保存后会写入数据库持久化日志；使用畅言模式时，请确认 appId 和 appKey 正确，以便抓取反向同步
+                                内置评论支持先审后发。AI 建议复用站点 AI 设置，由站长按需触发；评论是否发布由你决定。
                             </div>
                         </InfoBox>
 
@@ -389,6 +402,12 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
 
                         {formType === "base" ? (
                             <React.Fragment>
+                                <Form.Item label="先审后发" name="moderationEnabled" valuePropName="checked" extra="开启后，新提交的内置评论进入待审列表，通过后才公开。已有评论不受影响。">
+                                    <Switch />
+                                </Form.Item>
+                                <Form.Item label="AI 审核建议与回复草稿" name="aiEnabled" valuePropName="checked" extra="点击分析时，将评论正文交给站点已配置的 AI 服务，不附带邮箱、IP 或网站字段。AI 建议不会自动发布或删除评论。">
+                                    <Switch />
+                                </Form.Item>
                                 <Form.Item label="自定义评论框 CSS 样式" name="styleStr">
                                     <Input.TextArea placeholder=".comment-item { border-bottom: 1px solid #eee; }" rows={5} />
                                 </Form.Item>

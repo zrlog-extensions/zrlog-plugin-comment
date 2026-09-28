@@ -16,6 +16,7 @@ export interface PluginCoreInfoResponse {
     primaryColor: string
     colorPrimary?: string
     plugin: Plugin;
+    adminToken: string;
     setting: PluginSetting
 }
 
@@ -37,6 +38,7 @@ export interface PluginSetting {
     type: "changyan" | "base";
     commentEmailNotify?: boolean | string;
     syncHistory?: string;
+    moderation?: string;
 }
 
 export interface Plugin {

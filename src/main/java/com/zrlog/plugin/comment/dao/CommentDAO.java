@@ -1,6 +1,5 @@
 package com.zrlog.plugin.comment.dao;
 
-import com.google.gson.Gson;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.client.HttpClientUtils;
 import com.zrlog.plugin.comment.service.CommentService;
@@ -28,13 +27,16 @@ public class CommentDAO {
     private static final CommentHtmlRenderer COMMENT_HTML_RENDERER = new CommentHtmlRenderer();
 
     public static void save(IOSession session, Comment comment) {
-        LOGGER.log(Level.INFO, "new comment " + new Gson().toJson(comment));
-        session.sendMsg(ContentType.JSON, comment, ActionType.ADD_COMMENT.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST, addMsgPacket -> {
-            //Map<String, Object> response = new HashMap<>();
-            if (addMsgPacket.getStatus() == MsgPacketStatus.RESPONSE_SUCCESS) {
-                tryNotify(session, comment);
-            }
-        });
+        SaveResult result = session.getResponseSync(ContentType.JSON, comment, ActionType.ADD_COMMENT, SaveResult.class);
+        if (result == null || !result.result) {
+            throw new IllegalStateException("评论保存失败");
+        }
+        tryNotify(session, comment);
+        session.sendJsonMsg(new HashMap<>(), ActionType.REFRESH_CACHE.name(), IdUtil.getInt(), MsgPacketStatus.SEND_REQUEST);
+    }
+
+    public static class SaveResult {
+        public boolean result;
     }
 
     private static void tryNotify(IOSession session, Comment comment) {

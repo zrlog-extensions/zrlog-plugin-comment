@@ -2,6 +2,11 @@ package com.zrlog.plugin.comment.config;
 
 public class CommentUpdateRequest {
 
+    private String moderation;
+
+    public String getModeration() { return moderation; }
+    public void setModeration(String moderation) { this.moderation = moderation; }
+
     private String type;
     private String commentEmailNotify;
     private String changyan;

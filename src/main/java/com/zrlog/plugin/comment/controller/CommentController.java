@@ -1,6 +1,7 @@
 package com.zrlog.plugin.comment.controller;
 
 import com.google.gson.Gson;
+import com.zrlog.plugin.comment.moderation.*;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.comment.config.ChangyanConfig;
 import com.zrlog.plugin.comment.config.CommentApiResponse;
@@ -14,7 +15,6 @@ import com.zrlog.plugin.comment.config.WebsiteKeyRequest;
 import com.zrlog.plugin.comment.dao.CommentDAO;
 import com.zrlog.plugin.comment.render.CommentHtmlRenderer;
 import com.zrlog.plugin.comment.service.CommentService;
-import com.zrlog.plugin.common.IdUtil;
 import com.zrlog.plugin.common.LoggerUtil;
 import com.zrlog.plugin.common.model.Comment;
 import com.zrlog.plugin.data.codec.ContentType;
@@ -26,12 +26,14 @@ import com.zrlog.plugin.type.ActionType;
 
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.concurrent.Semaphore;
 
 public class CommentController {
 
     private static final Logger LOGGER = LoggerUtil.getLogger(CommentController.class);
     private static final CommentHtmlRenderer COMMENT_HTML_RENDERER = new CommentHtmlRenderer();
 
+    private static final Semaphore AI_REQUEST = new Semaphore(1);
     private final IOSession session;
     private final MsgPacket requestPacket;
     private final HttpRequestInfo requestInfo;
@@ -44,11 +46,25 @@ public class CommentController {
     }
 
     public void update() {
-        session.sendMsg(new MsgPacket(updateRequest(), ContentType.JSON, MsgPacketStatus.SEND_REQUEST, IdUtil.getInt(),
-                ActionType.SET_WEBSITE.name()), msgPacket -> {
+        try {
+            ModerationAccess.requireMutation(requestInfo, paramValue("adminToken"));
+            CommentUpdateRequest update = updateRequest();
+            session.getResponseSync(ContentType.JSON, update, ActionType.SET_WEBSITE, Object.class);
+            CommentWebsiteConfig saved = websiteConfig("type,commentEmailNotify,changyan,base,moderation");
+            if (!Objects.equals(update.getType(), saved.getType())
+                    || !Objects.equals(update.getCommentEmailNotify(), saved.getCommentEmailNotify())
+                    || !Objects.equals(update.getChangyan(), saved.getChangyan())
+                    || !Objects.equals(update.getBase(), saved.getBase())
+                    || !Objects.equals(update.getModeration(), saved.getModeration())) {
+                throw new IllegalStateException("评论配置保存未确认");
+            }
             CommentService.recordSyncHistory(session, true, 0, "更新插件配置参数成功");
             response(CommentApiResponse.success());
-        });
+        } catch (IllegalArgumentException e) {
+            response(CommentApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            response(CommentApiResponse.error("保存配置失败，请刷新后重试"));
+        }
     }
 
     public void json() {
@@ -56,48 +72,64 @@ public class CommentController {
     }
 
     public void history() {
+        ModerationAccess.requireAdmin(requestInfo);
         CommentHistoryConfig historyConfig = session.getResponseSync(ContentType.JSON, WebsiteKeyRequest.of("syncHistory"),
                 ActionType.GET_WEBSITE, CommentHistoryConfig.class);
         session.sendJsonMsg(historyList(historyConfig), requestPacket.getMethodStr(), requestPacket.getMsgId(), MsgPacketStatus.RESPONSE_SUCCESS);
     }
 
-    private void doComment() {
+    private String doComment() {
         CommentSubmitRequest submitRequest = submitRequest();
         if (Objects.isNull(submitRequest.getLogId()) || submitRequest.getLogId().trim().isEmpty()) {
-            throw new RuntimeException("文章id 不能为空");
+            throw new IllegalArgumentException("文章id 不能为空");
         }
         String content = submitRequest.getUserComment();
         if (Objects.isNull(content) || content.trim().isEmpty()) {
-            throw new RuntimeException("内容不能为空");
+            throw new IllegalArgumentException("内容不能为空");
         }
         String userName = submitRequest.getUserName();
         if (Objects.isNull(userName) || userName.trim().isEmpty()) {
-            throw new RuntimeException("昵称不能为空");
+            throw new IllegalArgumentException("昵称不能为空");
         }
 
         String userHome = CommentHtmlRenderer.normalizeHttpUrl(submitRequest.getWeb());
         if (userHome == null) {
-            throw new RuntimeException("网站地址仅支持 http:// 或 https://");
+            throw new IllegalArgumentException("网站地址仅支持 http:// 或 https://");
         }
         Comment comment = new Comment();
         comment.setContent(content);
         comment.setName(userName);
-        comment.setLogId(Long.parseLong(submitRequest.getLogId()));
+        comment.setLogId(parseArticleId(submitRequest.getLogId()));
         comment.setHome(userHome);
         comment.setMail(submitRequest.getEmail());
         comment.setHeadPortrait("");
-        comment.setIp(requestInfo.getHeader().get("X-Real-IP"));
+        comment.setIp(headerValue("X-Real-IP"));
         comment.setCreatedTime(new Date());
-        CommentDAO.save(session, comment);
+        CommentGuard.validate(comment, paramValue("contactWebsite"));
+        CommentGuard.INSTANCE.reserve(comment, System.currentTimeMillis());
+        try {
+            if (ModerationConfig.parse(websiteConfig("moderation").getModeration()).enabled) {
+                moderationRepository().add(comment);
+                return "评论已提交，审核通过后会显示";
+            }
+            CommentDAO.save(session, comment);
+            return "评论成功";
+        } catch (IllegalArgumentException e) {
+            CommentGuard.INSTANCE.releaseDuplicate(comment);
+            throw e;
+        }
+
     }
 
     public void addComment() {
         String resultMessage = "";
         try {
-            doComment();
-            resultMessage = "评论成功";
-        } catch (Exception e) {
+            resultMessage = doComment();
+        } catch (IllegalArgumentException e) {
             resultMessage = e.getMessage();
+        } catch (Exception e) {
+            LOGGER.warning("Comment submission failed: " + e.getClass().getSimpleName());
+            resultMessage = "评论提交未确认，请刷新页面查看后再试";
         } finally {
             session.responseHtmlStr(COMMENT_HTML_RENDERER.renderResult(resultMessage, session.getPlugin()),
                     requestPacket.getMethodStr(), requestPacket.getMsgId());
@@ -105,7 +137,8 @@ public class CommentController {
     }
 
     private Map<String, Object> data() {
-        CommentWebsiteConfig config = websiteConfig("changyan,base,commentEmailNotify,type,syncHistory");
+        ModerationAccess.requireAdmin(requestInfo);
+        CommentWebsiteConfig config = websiteConfig("changyan,base,commentEmailNotify,type,syncHistory,moderation");
         config.setUserName(requestInfo.getUserName());
         config.setUserId(requestInfo.getUserId());
         config.setFullUrl(requestInfo.getFullUrl().replace("install", ""));
@@ -115,6 +148,7 @@ public class CommentController {
         data.put("theme", requestInfo.isDarkMode() ? "dark" : "light");
         data.put("dark", requestInfo.isDarkMode());
         data.put("setting", config);
+        data.put("adminToken", ModerationAccess.token(requestInfo));
         data.put("primaryColor", requestInfo.getAdminColorPrimary());
         data.put("colorPrimary", requestInfo.getAdminColorPrimary());
         data.put("plugin", session.getPlugin());
@@ -186,7 +220,8 @@ public class CommentController {
     private CommentWebsiteConfig websiteConfig(String keys) {
         CommentWebsiteConfig config = session.getResponseSync(ContentType.JSON, WebsiteKeyRequest.of(keys), ActionType.GET_WEBSITE,
                 CommentWebsiteConfig.class);
-        return config == null ? new CommentWebsiteConfig() : config;
+        if (config == null) throw new IllegalStateException("评论配置读取未确认");
+        return config;
     }
 
     private CommentUpdateRequest updateRequest() {
@@ -195,6 +230,7 @@ public class CommentController {
         request.setCommentEmailNotify(paramValue("commentEmailNotify"));
         request.setChangyan(paramValue("changyan"));
         request.setBase(paramValue("base"));
+        request.setModeration(gson.toJson(ModerationConfig.parse(paramValue("moderation"))));
         return request;
     }
 
@@ -233,6 +269,77 @@ public class CommentController {
 
     private String blankToDefault(String value, String defaultValue) {
         return value == null || value.trim().isEmpty() ? defaultValue : value;
+    }
+
+    private ModerationRepository moderationRepository() {
+        return new ModerationRepository(new ModerationStore(session));
+    }
+
+    public void moderationList() {
+        try {
+            ModerationAccess.requireAdmin(requestInfo);
+            response(CommentApiResponse.data(moderationRepository().list()));
+        } catch (Exception e) {
+            response(CommentApiResponse.error("无法读取待审评论，请登录后台后重试"));
+        }
+    }
+
+    public void moderationApprove() {
+        moderationAction(() -> {
+            moderationRepository().approve(paramValue("id"), comment -> CommentDAO.save(session, comment));
+            CommentService.recordSyncHistory(session, true, 1, "人工审核通过一条评论");
+        });
+    }
+
+    public void moderationRemove() {
+        moderationAction(() -> {
+            moderationRepository().remove(paramValue("id"));
+            CommentService.recordSyncHistory(session, true, 1, "移除一条待审记录");
+        });
+    }
+
+    public void moderationAnalyze() {
+        boolean acquired = false;
+        try {
+            ModerationAccess.requireMutation(requestInfo, paramValue("adminToken"));
+            if (!ModerationConfig.parse(websiteConfig("moderation").getModeration()).aiEnabled) {
+                throw new IllegalArgumentException("请先在评论配置中开启 AI 审核建议");
+            }
+            acquired = AI_REQUEST.tryAcquire();
+            if (!acquired) throw new IllegalArgumentException("已有 AI 分析正在进行，请稍后再试");
+            ModerationRecord record = moderationRepository().get(paramValue("id"));
+            if (!"pending".equals(record.status)) throw new IllegalArgumentException("此评论已进入发布流程，请刷新列表");
+            ModerationRecord.AiSuggestion suggestion = new AdminAiClient().analyze(session, requestInfo, record.comment.getContent());
+            moderationRepository().saveSuggestion(record.id, suggestion);
+            response(CommentApiResponse.data(suggestion));
+        } catch (IllegalArgumentException e) {
+            response(CommentApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            LOGGER.warning("Comment AI analysis failed: " + e.getClass().getSimpleName());
+            response(CommentApiResponse.error("AI 建议暂不可用，请确认后台已更新并配置 AI；可继续人工审核"));
+        } finally {
+            if (acquired) AI_REQUEST.release();
+        }
+    }
+
+    private void moderationAction(Runnable action) {
+        try {
+            ModerationAccess.requireMutation(requestInfo, paramValue("adminToken"));
+            action.run();
+            response(CommentApiResponse.success());
+        } catch (IllegalArgumentException e) {
+            response(CommentApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            response(CommentApiResponse.error("操作结果未确认，请刷新列表；发布中的评论需先核对，避免重复发布"));
+        }
+    }
+
+    private String headerValue(String name) {
+        if (requestInfo.getHeader() == null) return null;
+        for (Map.Entry<String, String> header : requestInfo.getHeader().entrySet()) {
+            if (name.equalsIgnoreCase(header.getKey())) return header.getValue();
+        }
+        return null;
     }
 
     private void response(Object data) {

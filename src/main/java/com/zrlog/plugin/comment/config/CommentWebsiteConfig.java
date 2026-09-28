@@ -7,6 +7,11 @@ public class CommentWebsiteConfig {
     private String changyan;
     private String base;
     private String commentEmailNotify;
+    private String moderation;
+
+    public String getModeration() { return moderation; }
+    public void setModeration(String moderation) { this.moderation = moderation; }
+
     private String type;
     private String syncHistory;
     private String userName;
