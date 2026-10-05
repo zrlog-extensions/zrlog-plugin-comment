@@ -17,7 +17,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false BUILD_PATH=../resources/templates react-scripts build",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "type-check": "tsc --noEmit"
   },
