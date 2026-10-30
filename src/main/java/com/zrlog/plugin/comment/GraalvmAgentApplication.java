@@ -27,7 +27,7 @@ import java.util.Collections;
 public class GraalvmAgentApplication {
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, ReflectiveOperationException {
         RunConstants.runType = RunType.AGENT;
         PluginNativeImageUtils.usedGsonObject();
         PluginNativeImageUtils.gsonNativeAgentByClazz(Arrays.asList(ChangyanComment.class, CommentsEntry.class, User.class,
@@ -47,7 +47,8 @@ public class GraalvmAgentApplication {
         PluginNativeImageUtils.doLoopResourceLoad(file.listFiles(), file.getPath() + "/", "/");
         //Application.nativeAgent = true;
         PluginNativeImageUtils.exposeController(Collections.singletonList(CommentController.class));
-        Application.main(args);
+        // Register the lifecycle constructor without connecting to a real Core on its default port.
+        CommentPluginAction.class.getDeclaredConstructor().newInstance();
 
     }
 }

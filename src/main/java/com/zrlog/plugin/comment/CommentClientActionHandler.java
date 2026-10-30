@@ -7,8 +7,33 @@ import com.zrlog.plugin.comment.controller.ChangyanController;
 import com.zrlog.plugin.data.codec.HttpRequestInfo;
 import com.zrlog.plugin.data.codec.MsgPacket;
 import com.zrlog.plugin.data.codec.MsgPacketStatus;
+import com.zrlog.plugin.message.CapabilityInvokeRequest;
+import com.zrlog.plugin.message.CapabilityInvokeResult;
 
 public class CommentClientActionHandler extends ClientActionHandler {
+
+    @Override
+    public int capabilityLifecycleVersion() {
+        return 2;
+    }
+
+    @Override
+    public void capabilityInvoke(IOSession session, MsgPacket msgPacket) {
+        CapabilityInvokeRequest request = new Gson().fromJson(msgPacket.getDataStr(), CapabilityInvokeRequest.class);
+        if (request != null && request.isRequireCompletion() && request.getViewRequest() != null
+                && !request.isViewResource()
+                && !"/widget".equals(request.getViewRequest().getUri())
+                && !"/widget.action".equals(request.getViewRequest().getUri())) {
+            // Public static rendering supports the synchronous read-only widget.
+            // Legacy Changyan sync and comment mutations must not run as host views.
+            CapabilityInvokeResult result = new CapabilityInvokeResult();
+            result.setExecutionCompleted(true);
+            result.setErrorMessage("Only the comment widget supports host view rendering");
+            session.sendJsonMsg(result, msgPacket.getMethodStr(), msgPacket.getMsgId(), MsgPacketStatus.RESPONSE_ERROR);
+            return;
+        }
+        super.capabilityInvoke(session, msgPacket);
+    }
 
     @Override
     public void httpMethod(IOSession session, MsgPacket msgPacket) {

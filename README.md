@@ -26,6 +26,11 @@ ZrLog 评论插件。提供内置评论框配置，也可切换到畅言评论�
 
 ## 构建
 
+当前工程接入 SDK 的执行完成协议版本 2，供宿主定时刷新和静态文章生成使用。
+宿主页面渲染仅开放同步的评论框 `/widget`；畅言回推和评论写入继续使用原请求入口，不能作为静态页面步骤执行。
+发布时需先提供支持该协议的 SDK 和 plugin-core，再构建评论插件，最后接入宿主的助手自动化。
+依赖 SDK `4.0.7`；需先完成其独立发布单并确认 Maven Central 制品可解析，再构建和发布本插件。
+
 ```shell
 export JAVA_HOME=${HOME}/dev/graalvm-jdk-latest
 export PATH=${JAVA_HOME}/bin:$PATH
