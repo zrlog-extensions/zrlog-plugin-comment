@@ -1,20 +1,15 @@
 import {createRoot} from "react-dom/client";
-import zh_CN from "antd/es/locale/zh_CN";
-import {legacyLogicalPropertiesTransformer, StyleProvider} from "@ant-design/cssinjs";
+import {ConfigProvider} from "antd";
 import {useEffect, useState} from "react";
-import {App, ConfigProvider, Layout, theme} from "antd";
 import {BrowserRouter} from "react-router-dom";
 import AppBase from "./AppBase";
 import axios from "axios";
+import {PluginThemeProvider} from "./PluginThemeProvider";
+import type {PluginAppearance} from "./PluginThemeProvider";
 
-const {darkAlgorithm, defaultAlgorithm} = theme;
-const {Content} = Layout;
-
-export interface PluginCoreInfoResponse {
-    dark: boolean
-    theme?: string
-    primaryColor: string
-    colorPrimary?: string
+export interface PluginCoreInfoResponse extends PluginAppearance {
+    theme?: string;
+    primaryColor?: string;
     plugin: Plugin;
     adminToken: string;
     setting: PluginSetting
@@ -59,46 +54,30 @@ export interface Plugin {
 const loadFromDocument = () => {
     try {
         const a = document.getElementById("data") || document.getElementById("pluginInfo");
-        if (a === null || a.innerText.length === 0) {
+        if (!a?.textContent) {
             return null;
         }
-        return covertData(JSON.parse(a.innerText));
+        return normalizeData(JSON.parse(a.textContent));
     } catch (e) {
         return null;
     }
 }
 
-const covertData = (data: PluginCoreInfoResponse) => {
+const normalizeData = (data: PluginCoreInfoResponse) => {
     return {
         ...data,
         dark: data.dark ?? data.theme === "dark",
-        primaryColor: data.primaryColor || data.colorPrimary || "#1677ff",
+        colorPrimary: data.colorPrimary || data.primaryColor,
     };
 }
 
-const IndexContent = ({pluginInfo, isDark}: { pluginInfo: PluginCoreInfoResponse; isDark: boolean }) => {
-    return (
-        <BrowserRouter>
-            <StyleProvider transformers={[legacyLogicalPropertiesTransformer]}>
-                <Content style={{minHeight: "100vh", backgroundColor: isDark ? "#141414" : undefined, color: isDark ? "#dfdfdf" : undefined}}>
-                    <App>
-                        <AppBase pluginInfo={{ ...pluginInfo, dark: isDark }}/>
-                    </App>
-                </Content>
-            </StyleProvider>
-        </BrowserRouter>
-    );
-};
-
 const Index = () => {
     const [pluginInfo, setPluginInfo] = useState<PluginCoreInfoResponse | null>(loadFromDocument);
-    const isDark = pluginInfo?.dark || false;
 
     useEffect(() => {
         if (pluginInfo === null) {
-            axios.get("json").then(({data}) => {
-                const nextPluginInfo = covertData(data);
-                setPluginInfo(nextPluginInfo);
+            axios.get<PluginCoreInfoResponse>("json").then(({data}) => {
+                setPluginInfo(normalizeData(data));
             });
         }
     }, []);
@@ -108,28 +87,13 @@ const Index = () => {
     }
 
     return (
-        <ConfigProvider
-            locale={zh_CN}
-            theme={{
-                algorithm: isDark ? darkAlgorithm : defaultAlgorithm,
-                token: {
-                    colorPrimary: pluginInfo.primaryColor
-                }
-            }}
-            divider={{
-                style: {
-                    margin: "16px 0px"
-                }
-            }}
-            table={
-                {
-                    style: {
-                        whiteSpace: "nowrap"
-                    },
-                }}
-        >
-            <IndexContent pluginInfo={pluginInfo} isDark={isDark}/>
-        </ConfigProvider>
+        <PluginThemeProvider page={pluginInfo}>
+            <ConfigProvider divider={{style: {margin: "16px 0"}}} table={{style: {whiteSpace: "nowrap"}}}>
+                <BrowserRouter>
+                    <AppBase pluginInfo={pluginInfo}/>
+                </BrowserRouter>
+            </ConfigProvider>
+        </PluginThemeProvider>
     );
 };
 

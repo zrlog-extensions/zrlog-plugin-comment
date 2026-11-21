@@ -5,24 +5,22 @@ import {
     ColorPicker,
     Divider,
     Form,
-    Input,
-    message,
     Select,
-    Switch,
-    Table,
     Modal,
-    Tag,
     Card,
     Grid,
-    theme
+    theme,
 } from "antd";
-import {
-    SettingOutlined,
-    ReloadOutlined,
-    CheckCircleOutlined,
-    CloseCircleOutlined,
-    InfoCircleOutlined
-} from "@ant-design/icons";
+import {useUiMessage} from "@zrlog/ui/feedback";
+import Input from "@zrlog/ui/antd/Input";
+import Switch from "@zrlog/ui/antd/Switch";
+import Table from "@zrlog/ui/antd/Table";
+import Tag from "@zrlog/ui/antd/Tag";
+import SettingsIcon from "@zrlog/ui/icons/settings";
+import RefreshIcon from "@zrlog/ui/icons/refresh";
+import SuccessIcon from "@zrlog/ui/icons/success";
+import ErrorIcon from "@zrlog/ui/icons/error";
+import InfoIcon from "@zrlog/ui/icons/info";
 import {BaseSetting, ChangyanSetting, PluginCoreInfoResponse} from "../index";
 import axios from "axios";
 import styled from "styled-components";
@@ -41,7 +39,6 @@ const Shell = styled.div<{ $token: any }>`
   display: flex;
   flex-direction: column;
   gap: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   color: ${props => props.$token.colorText};
 
   @media (max-width: 1024px) {
@@ -160,7 +157,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
     const {token} = theme.useToken();
     const screens = Grid.useBreakpoint();
     const isPhone = Boolean(screens.xs && !screens.sm);
-    const colorPrimary = data.primaryColor || data.colorPrimary || token.colorPrimary;
+    const {colorPrimary} = token;
 
     const [changyan, setChangyan] = React.useState<ChangyanSetting>(() => {
         try {
@@ -192,7 +189,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
         }
     });
 
-    const [messageApi, contextHolder] = message.useMessage({maxCount: 3});
+    const [messageApi, contextHolder] = useUiMessage({maxCount: 3});
     const [settingsVisible, setSettingsVisible] = React.useState<boolean>(false);
     const [saveLoading, setSaveLoading] = React.useState<boolean>(false);
     const [tableLoading, setTableLoading] = React.useState<boolean>(false);
@@ -309,7 +306,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
             width: 110,
             align: "center" as const,
             render: (success: boolean) => (
-                <Tag color={success ? "success" : "error"} icon={success ? <CheckCircleOutlined /> : <CloseCircleOutlined />}>
+                <Tag color={success ? "success" : "error"} icon={success ? <SuccessIcon /> : <ErrorIcon />}>
                     {success ? "成功" : "失败"}
                 </Tag>
             ),
@@ -334,7 +331,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 <Actions>
                     <Button 
                         type="default" 
-                        icon={<ReloadOutlined />} 
+                        icon={<RefreshIcon />}
                         loading={tableLoading} 
                         onClick={reloadData}
                     >
@@ -342,7 +339,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                     </Button>
                     <Button 
                         type="primary" 
-                        icon={<SettingOutlined />} 
+                        icon={<SettingsIcon />}
                         onClick={openSettings}
                     >
                         配置参数
@@ -381,7 +378,7 @@ const CoreIndex: React.FC<CoreIndexProps> = ({data}) => {
                 >
                     <FormScrollArea>
                         <InfoBox $token={token}>
-                            <InfoCircleOutlined style={{ marginTop: 2, color: colorPrimary }} />
+                            <InfoIcon style={{ marginTop: 2, color: colorPrimary }} />
                             <div>
                                 内置评论支持先审后发。AI 建议复用站点 AI 设置，由站长按需触发；评论是否发布由你决定。
                             </div>

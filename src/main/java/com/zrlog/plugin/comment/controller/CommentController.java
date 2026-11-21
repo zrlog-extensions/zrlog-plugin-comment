@@ -1,6 +1,7 @@
 package com.zrlog.plugin.comment.controller;
 
 import com.google.gson.Gson;
+import com.zrlog.plugin.data.codec.PluginAppearance;
 import com.zrlog.plugin.comment.moderation.*;
 import com.zrlog.plugin.IOSession;
 import com.zrlog.plugin.comment.config.ChangyanConfig;
@@ -147,6 +148,7 @@ public class CommentController {
         Map<String, Object> data = new HashMap<>();
         data.put("theme", requestInfo.isDarkMode() ? "dark" : "light");
         data.put("dark", requestInfo.isDarkMode());
+        data.put("appearance", PluginAppearance.from(requestInfo));
         data.put("setting", config);
         data.put("adminToken", ModerationAccess.token(requestInfo));
         data.put("primaryColor", requestInfo.getAdminColorPrimary());

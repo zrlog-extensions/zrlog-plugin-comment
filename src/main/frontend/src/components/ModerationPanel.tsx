@@ -1,6 +1,13 @@
 import React from "react";
-import {Alert, Button, Card, Input, message, Modal, Popconfirm, Space, Table, Tag, Typography} from "antd";
-import {ReloadOutlined, SafetyCertificateOutlined} from "@ant-design/icons";
+import {Alert, Button, Card, Modal, Space} from "antd";
+import {useUiMessage} from "@zrlog/ui/feedback";
+import Input from "@zrlog/ui/antd/Input";
+import Popconfirm from "@zrlog/ui/antd/Popconfirm";
+import Table from "@zrlog/ui/antd/Table";
+import Tag from "@zrlog/ui/antd/Tag";
+import Typography from "@zrlog/ui/antd/Typography";
+import RefreshIcon from "@zrlog/ui/icons/refresh";
+import SecurityIcon from "@zrlog/ui/icons/security";
 import axios from "axios";
 
 interface Suggestion { verdict: "normal" | "spam" | "review"; reason: string; reply: string }
@@ -22,7 +29,7 @@ const ModerationPanel = ({adminToken, enabled, aiEnabled, type}: {
     const [busy, setBusy] = React.useState("");
     const [selected, setSelected] = React.useState<Review | null>(null);
     const [draft, setDraft] = React.useState("");
-    const [messageApi, contextHolder] = message.useMessage();
+    const [messageApi, contextHolder] = useUiMessage();
 
     const reload = React.useCallback(async () => {
         setLoading(true);
@@ -59,8 +66,8 @@ const ModerationPanel = ({adminToken, enabled, aiEnabled, type}: {
         }
     };
 
-    return <Card title={<Space><SafetyCertificateOutlined />待审评论 <Tag>{records.length}</Tag></Space>}
-                 extra={<Button icon={<ReloadOutlined />} onClick={reload} loading={loading}>刷新</Button>}>
+    return <Card title={<Space><SecurityIcon />待审评论 <Tag>{records.length}</Tag></Space>}
+                 extra={<Button icon={<RefreshIcon />} onClick={reload} loading={loading}>刷新</Button>}>
         {contextHolder}
         <Alert type={enabled && type === "base" ? "info" : "warning"} showIcon style={{marginBottom: 16}}
                title={type === "base"
